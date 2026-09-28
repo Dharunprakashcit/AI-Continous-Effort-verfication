@@ -1,0 +1,11 @@
+node_modules/
+.env
+*.pyc
+__pycache__/
+ann-service/venv/
+frontend/dist/
+backend/.env
+*.log
+ann-service/model.h5
+ann-service/scaler.pkl
+.claude/
