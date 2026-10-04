@@ -74,6 +74,12 @@ npm run dev                  # http://localhost:5173
 
 Log in as faculty to see the team overview, risk badges, and per-student agent explanations with a feedback (correct/incorrect) loop. Log in as a student to see personal tasks, activity, contribution score, and AI feedback, with a button to log a day's activity and re-run the pipeline live.
 
+## Portals
+
+- **Student portal** (`/student`): Overview (score ring, rank in team, activity chart, tasks), Activity (log work, daily breakdown), Tasks (update status), AI feedback (score breakdown, trend, reasons).
+- **Faculty portal** (`/faculty`): Teams (every team as a card), a page per team (member scores, trend, activity, member table), a page per student (breakdown, reasons, review form), Analytics (risk distribution, team comparison, trends, model comparison and drift), Alerts.
+- The demo seed creates 4 teams and 17 students (`23cs001` to `23cs017`). Earlier weekly score snapshots are generated demo data so the trend charts have history.
+
 ## AML layer: advanced machine learning workflow
 
 `ann-service/` also holds the practical ML lifecycle around the ANN:

@@ -2,12 +2,19 @@ import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./AuthContext.jsx";
 import Login from "./pages/Login.jsx";
-import StudentDashboard from "./pages/StudentDashboard.jsx";
-import FacultyDashboard from "./pages/FacultyDashboard.jsx";
-import StudentDetail from "./pages/StudentDetail.jsx";
+import AppShell from "./app/AppShell.jsx";
 import Landing from "./site/Landing.jsx";
 import Terms from "./site/Terms.jsx";
 import Privacy from "./site/Privacy.jsx";
+import StudentOverview from "./portal/StudentOverview.jsx";
+import StudentActivity from "./portal/StudentActivity.jsx";
+import StudentTasks from "./portal/StudentTasks.jsx";
+import StudentFeedback from "./portal/StudentFeedback.jsx";
+import TeamsPage from "./portal/TeamsPage.jsx";
+import TeamDetail from "./portal/TeamDetail.jsx";
+import FacultyStudent from "./portal/FacultyStudent.jsx";
+import Analytics from "./portal/Analytics.jsx";
+import Alerts from "./portal/Alerts.jsx";
 
 function PrivateRoute({ role, children }) {
   const { user } = useAuth();
@@ -21,32 +28,36 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route
-        path="/student"
-        element={
-          <PrivateRoute role="student">
-            <StudentDashboard />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/faculty"
-        element={
-          <PrivateRoute role="faculty">
-            <FacultyDashboard />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/faculty/students/:studentId"
-        element={
-          <PrivateRoute role="faculty">
-            <StudentDetail />
-          </PrivateRoute>
-        }
-      />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
+
+      <Route
+        element={
+          <PrivateRoute role="student">
+            <AppShell />
+          </PrivateRoute>
+        }
+      >
+        <Route path="/student" element={<StudentOverview />} />
+        <Route path="/student/activity" element={<StudentActivity />} />
+        <Route path="/student/tasks" element={<StudentTasks />} />
+        <Route path="/student/feedback" element={<StudentFeedback />} />
+      </Route>
+
+      <Route
+        element={
+          <PrivateRoute role="faculty">
+            <AppShell />
+          </PrivateRoute>
+        }
+      >
+        <Route path="/faculty" element={<TeamsPage />} />
+        <Route path="/faculty/teams/:teamId" element={<TeamDetail />} />
+        <Route path="/faculty/students/:studentId" element={<FacultyStudent />} />
+        <Route path="/faculty/analytics" element={<Analytics />} />
+        <Route path="/faculty/alerts" element={<Alerts />} />
+      </Route>
+
       <Route
         path="/"
         element={
