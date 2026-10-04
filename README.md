@@ -74,7 +74,7 @@ npm run dev                  # http://localhost:5173
 
 Log in as faculty to see the team overview, risk badges, and per-student agent explanations with a feedback (correct/incorrect) loop. Log in as a student to see personal tasks, activity, contribution score, and AI feedback, with a button to log a day's activity and re-run the pipeline live.
 
-## AML layer: the applied machine-learning workflow
+## AML layer: advanced machine learning workflow
 
 `ann-service/` also holds the practical ML lifecycle around the ANN:
 
