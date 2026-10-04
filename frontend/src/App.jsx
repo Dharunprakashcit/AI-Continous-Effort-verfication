@@ -5,6 +5,9 @@ import Login from "./pages/Login.jsx";
 import StudentDashboard from "./pages/StudentDashboard.jsx";
 import FacultyDashboard from "./pages/FacultyDashboard.jsx";
 import StudentDetail from "./pages/StudentDetail.jsx";
+import Landing from "./site/Landing.jsx";
+import Terms from "./site/Terms.jsx";
+import Privacy from "./site/Privacy.jsx";
 
 function PrivateRoute({ role, children }) {
   const { user } = useAuth();
@@ -42,13 +45,15 @@ function AppRoutes() {
           </PrivateRoute>
         }
       />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
       <Route
         path="/"
         element={
           user ? (
             <Navigate to={user.role === "faculty" ? "/faculty" : "/student"} replace />
           ) : (
-            <Navigate to="/login" replace />
+            <Landing />
           )
         }
       />

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext.jsx";
 
 export default function Login() {
@@ -47,6 +47,11 @@ export default function Login() {
           faculty@example.edu / password123
           <br />
           23cs001@example.edu ... 23cs004@example.edu / password123
+        </div>
+
+        <div className="hint">
+          <Link to="/">Back to overview</Link> &nbsp; <Link to="/terms">Terms of Service</Link> &nbsp;{" "}
+          <Link to="/privacy">Privacy Policy</Link>
         </div>
       </form>
     </div>

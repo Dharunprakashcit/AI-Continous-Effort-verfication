@@ -63,8 +63,9 @@ def predict():
     x_scaled = scaler.transform(x)
     risk_prob = float(model.predict(x_scaled, verbose=0).ravel()[0])
 
-    with open(LOG_PATH, "a") as f:
-        f.write(json.dumps({name: float(payload[name]) for name in feature_names}) + "\n")
+    if payload.get("log", True):
+        with open(LOG_PATH, "a") as f:
+            f.write(json.dumps({name: float(payload[name]) for name in feature_names}) + "\n")
 
     return jsonify(
         {
