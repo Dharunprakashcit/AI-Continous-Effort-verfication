@@ -74,6 +74,29 @@ npm run dev                  # http://localhost:5173
 
 Log in as faculty to see the team overview, risk badges, and per-student agent explanations with a feedback (correct/incorrect) loop. Log in as a student to see personal tasks, activity, contribution score, and AI feedback, with a button to log a day's activity and re-run the pipeline live.
 
+## AML layer: the applied machine-learning workflow
+
+`ann-service/` also holds the practical ML lifecycle around the ANN:
+
+| Stage | File | What it does |
+|---|---|---|
+| Data validation | `aml_pipeline.py` | Range, missing-value and class-balance checks; training stops if they fail |
+| Model comparison | `aml_pipeline.py` | Logistic Regression, Random Forest, Gradient Boosting, sklearn MLP vs the deployed Keras ANN, 5-fold stratified CV, same held-out split |
+| Tuning | `aml_pipeline.py` | GridSearchCV on Random Forest and Gradient Boosting |
+| Explainability | `aml_pipeline.py` | Permutation feature importance, ROC curves in `aml_comparison.png` |
+| Model registry | `aml_pipeline.py` | Versioned models plus `models/registry.json` (metrics, dataset hash, timestamp) |
+| Deployment | `predict_service.py` | `/predict` (returns `model_version`), `/model/info`, `/model/drift` |
+| Monitoring | `drift_monitor.py` | KS test and PSI of live inputs vs training data; `--demo` simulates a disengaging cohort |
+| Feedback and retraining | `retrain.py` | Pulls faculty-reviewed predictions from `/api/faculty/feedback-export`, appends them, retrains, reruns the comparison |
+
+```bash
+python train_model.py && python aml_pipeline.py
+python drift_monitor.py --demo
+python retrain.py --token <faculty JWT>
+```
+
+The faculty dashboard shows the model comparison table and drift status.
+
 ## Project structure
 
 ```

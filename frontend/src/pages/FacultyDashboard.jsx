@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../AuthContext.jsx";
 import RiskBadge from "../components/RiskBadge.jsx";
+import ModelInsights from "../components/ModelInsights.jsx";
 
 export default function FacultyDashboard() {
   const { user, logout } = useAuth();
@@ -75,6 +76,8 @@ export default function FacultyDashboard() {
           </tbody>
         </table>
       </section>
+
+      <ModelInsights />
 
       <section className="card">
         <h3>Active Alerts (NUDGE / ALERT)</h3>

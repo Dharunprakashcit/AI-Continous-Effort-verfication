@@ -87,4 +87,22 @@ router.post("/predictions/:id/feedback", requireAuth, requireRole("faculty"), as
   res.json(prediction);
 });
 
+// Faculty-reviewed predictions as labelled training rows for retrain.py.
+// A confirmed prediction keeps its label; a rejected one flips it.
+router.get("/feedback-export", requireAuth, requireRole("faculty"), async (req, res) => {
+  const reviewed = await Prediction.find({
+    "facultyFeedback.reviewed": true,
+    featuresUsed: { $exists: true },
+  }).lean();
+
+  const rows = reviewed.map((p) => {
+    const predictedAtRisk = p.riskLevel !== "LOW" ? 1 : 0;
+    return {
+      ...p.featuresUsed,
+      risk_label: p.facultyFeedback.correct ? predictedAtRisk : 1 - predictedAtRisk,
+    };
+  });
+  res.json(rows);
+});
+
 module.exports = router;

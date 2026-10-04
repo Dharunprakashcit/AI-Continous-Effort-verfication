@@ -13,6 +13,7 @@ Run: python train_model.py
 Outputs: model.h5 (Keras ANN), scaler.pkl (StandardScaler), metrics.json
 """
 import json
+import os
 
 import numpy as np
 import pandas as pd
@@ -93,8 +94,11 @@ def build_model(input_dim):
 
 
 def main():
-    df = simulate_dataset()
-    df.to_csv("dataset.csv", index=False)
+    if os.path.exists("dataset.csv"):
+        df = pd.read_csv("dataset.csv")
+    else:
+        df = simulate_dataset()
+        df.to_csv("dataset.csv", index=False)
 
     X = df[FEATURE_NAMES].values
     y = df["risk_label"].values

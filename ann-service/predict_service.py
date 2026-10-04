@@ -8,7 +8,9 @@ Run: python predict_service.py  (listens on :5001)
 """
 import json
 import os
+import time
 
+from drift_monitor import compute_drift
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import joblib
@@ -18,6 +20,12 @@ from tensorflow import keras
 app = Flask(__name__)
 CORS(app)
 
+LOG_PATH = "predictions_log.jsonl"
+MODEL_VERSION = (
+    time.strftime("%Y%m%d%H%M%S", time.gmtime(os.path.getmtime("model.h5")))
+    if os.path.exists("model.h5")
+    else "untrained"
+)
 MODEL_PATH = "model.h5"
 SCALER_PATH = "scaler.pkl"
 FEATURES_PATH = "feature_names.json"
@@ -55,13 +63,45 @@ def predict():
     x_scaled = scaler.transform(x)
     risk_prob = float(model.predict(x_scaled, verbose=0).ravel()[0])
 
+    with open(LOG_PATH, "a") as f:
+        f.write(json.dumps({name: float(payload[name]) for name in feature_names}) + "\n")
+
     return jsonify(
         {
             "risk_probability": round(risk_prob, 4),
             "risk_percent": round(risk_prob * 100, 1),
             "features_used": feature_names,
+            "model_version": MODEL_VERSION,
         }
     )
+
+
+def read_json(path, default=None):
+    if os.path.exists(path):
+        with open(path) as f:
+            return json.load(f)
+    return default
+
+
+@app.route("/model/info", methods=["GET"])
+def model_info():
+    registry = read_json("models/registry.json", [])
+    report = read_json("aml_report.json", {})
+    return jsonify(
+        {
+            "serving": {"model": "ANN (Keras)", "version": MODEL_VERSION},
+            "ann_metrics": read_json("metrics.json"),
+            "comparison": report.get("models", {}),
+            "feature_importance": report.get("feature_importance", {}),
+            "data_validation": report.get("data_validation"),
+            "registry": registry[-5:],
+        }
+    )
+
+
+@app.route("/model/drift", methods=["GET"])
+def model_drift():
+    return jsonify(compute_drift())
 
 
 if __name__ == "__main__":

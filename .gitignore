@@ -9,3 +9,5 @@ backend/.env
 ann-service/model.h5
 ann-service/scaler.pkl
 .claude/
+ann-service/predictions_log.jsonl
+ann-service/models/

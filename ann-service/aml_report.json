@@ -1,0 +1,88 @@
+{
+  "data_validation": {
+    "rows": 4000,
+    "issues": [],
+    "positive_rate": 0.36,
+    "passed": true
+  },
+  "models": {
+    "LogisticRegression": {
+      "cv_f1_mean": 0.7353,
+      "cv_f1_std": 0.0288,
+      "cv_roc_auc_mean": 0.892,
+      "test": {
+        "accuracy": 0.8263,
+        "precision": 0.7543,
+        "recall": 0.7674,
+        "f1": 0.7608,
+        "roc_auc": 0.8941
+      },
+      "best_params": {}
+    },
+    "RandomForest": {
+      "cv_f1_mean": 0.719,
+      "cv_f1_std": 0.0206,
+      "cv_roc_auc_mean": 0.8777,
+      "test": {
+        "accuracy": 0.8137,
+        "precision": 0.7509,
+        "recall": 0.7222,
+        "f1": 0.7363,
+        "roc_auc": 0.878
+      },
+      "best_params": {
+        "clf__max_depth": null,
+        "clf__n_estimators": 100
+      }
+    },
+    "GradientBoosting": {
+      "cv_f1_mean": 0.7406,
+      "cv_f1_std": 0.0197,
+      "cv_roc_auc_mean": 0.8911,
+      "test": {
+        "accuracy": 0.82,
+        "precision": 0.7535,
+        "recall": 0.7431,
+        "f1": 0.7483,
+        "roc_auc": 0.8917
+      },
+      "best_params": {
+        "clf__learning_rate": 0.1,
+        "clf__n_estimators": 200
+      }
+    },
+    "MLP (sklearn)": {
+      "cv_f1_mean": 0.7429,
+      "cv_f1_std": 0.0251,
+      "cv_roc_auc_mean": 0.8968,
+      "test": {
+        "accuracy": 0.825,
+        "precision": 0.745,
+        "recall": 0.7812,
+        "f1": 0.7627,
+        "roc_auc": 0.8949
+      },
+      "best_params": {}
+    },
+    "ANN (Keras, deployed)": {
+      "test": {
+        "accuracy": 0.8363,
+        "precision": 0.7608,
+        "recall": 0.7951,
+        "f1": 0.7776,
+        "roc_auc": 0.8987
+      },
+      "best_params": {}
+    }
+  },
+  "champion_sklearn": "MLP (sklearn)",
+  "feature_importance": {
+    "tasks_completed_pct": 0.1671,
+    "doc_edits": 0.1072,
+    "commits": 0.0644,
+    "messages_sent": 0.0409,
+    "deadline_adherence_pct": 0.0334,
+    "active_days_last7": 0.0074
+  },
+  "registry_version": "20261004102132"
+}
