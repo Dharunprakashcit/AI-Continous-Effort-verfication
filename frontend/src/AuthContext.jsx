@@ -3,23 +3,36 @@ import api from "./api";
 
 const AuthContext = createContext(null);
 
+// "Remember me" keeps the session in localStorage; otherwise it lives only in this tab.
+function readStored(key) {
+  return localStorage.getItem(key) ?? sessionStorage.getItem(key);
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem("user");
+    const raw = readStored("user");
     return raw ? JSON.parse(raw) : null;
   });
 
-  async function login(email, password) {
+  function clearStored() {
+    for (const store of [localStorage, sessionStorage]) {
+      store.removeItem("token");
+      store.removeItem("user");
+    }
+  }
+
+  async function login(email, password, remember = true) {
     const { data } = await api.post("/auth/login", { email, password });
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    clearStored();
+    const store = remember ? localStorage : sessionStorage;
+    store.setItem("token", data.token);
+    store.setItem("user", JSON.stringify(data.user));
     setUser(data.user);
     return data.user;
   }
 
   function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    clearStored();
     setUser(null);
   }
 
