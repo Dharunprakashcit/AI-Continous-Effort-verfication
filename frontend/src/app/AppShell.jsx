@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext.jsx";
 import api from "../api";
-import { IconBell, IconChart, IconChat, IconMenu, IconPulse, IconTasks, IconUser, IconUsers } from "./icons.jsx";
+import { IconBell, IconBook, IconChart, IconChat, IconMenu, IconPulse, IconTasks, IconUser, IconUsers } from "./icons.jsx";
 import "./app.css";
 
 const NAV = {
@@ -13,7 +13,8 @@ const NAV = {
     { to: "/student/feedback", label: "AI feedback", icon: <IconChat /> },
   ],
   faculty: [
-    { to: "/faculty", label: "Teams", icon: <IconUsers />, end: true },
+    { to: "/faculty", label: "Assignments", icon: <IconBook />, end: true },
+    { to: "/faculty/teams", label: "Teams", icon: <IconUsers /> },
     { to: "/faculty/analytics", label: "Analytics", icon: <IconChart /> },
     { to: "/faculty/alerts", label: "Alerts", icon: <IconBell /> },
   ],

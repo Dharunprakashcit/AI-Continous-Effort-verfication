@@ -17,7 +17,7 @@ export default function TeamDetail() {
 
   return (
     <>
-      <Link to="/faculty" className="crumb">&larr; All teams</Link>
+      <Link to="/faculty/teams" className="crumb">&larr; All teams</Link>
       <div className="profile">
         <div>
           <h1 style={{ fontSize: "1.75rem" }}>{team.name}</h1>

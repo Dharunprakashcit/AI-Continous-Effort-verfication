@@ -43,6 +43,9 @@ export const IconTarget = () => (
 export const IconTrophy = () => (
   <svg {...base}><path d="M8 4h8v5a4 4 0 01-8 0zM8 6H4v1a3 3 0 003 3M16 6h4v1a3 3 0 01-3 3M12 13v4M8 20h8" /></svg>
 );
+export const IconBook = () => (
+  <svg {...base}><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z" /><path d="M5 17a3 3 0 013-3h11" /></svg>
+);
 export const IconBolt = () => (
   <svg {...base}><path d="M13 3L5 14h6l-1 7 8-11h-6z" /></svg>
 );

@@ -8,6 +8,10 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ["student", "faculty"], required: true },
     registerNo: { type: String },
     team: { type: mongoose.Schema.Types.ObjectId, ref: "Team" },
+    attendancePct: Number,
+    internalMarks: Number,
+    previousGpa: Number,
+    classroomConnectedAt: Date,
   },
   { timestamps: true }
 );

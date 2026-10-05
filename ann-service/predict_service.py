@@ -84,6 +84,34 @@ def read_json(path, default=None):
     return default
 
 
+ACADEMIC_PATH = "academic_model.pkl"
+academic_model = joblib.load(ACADEMIC_PATH) if os.path.exists(ACADEMIC_PATH) else None
+ACADEMIC_VERSION = (
+    time.strftime("%Y%m%d%H%M%S", time.gmtime(os.path.getmtime(ACADEMIC_PATH)))
+    if academic_model is not None
+    else None
+)
+
+
+@app.route("/academic/predict", methods=["POST"])
+def academic_predict():
+    if academic_model is None:
+        return jsonify({"error": "Academic model not trained. Run python academic_model.py"}), 503
+    payload = request.get_json(force=True)
+    names = read_json("academic_report.json", {}).get("features", [])
+    try:
+        x = np.array([[float(payload[n]) for n in names]])
+    except (KeyError, TypeError, ValueError) as exc:
+        return jsonify({"error": f"invalid input: {exc}", "expected": names}), 400
+    prob = float(academic_model.predict_proba(x)[0][1])
+    return jsonify({"risk_probability": round(prob, 4), "model_version": ACADEMIC_VERSION})
+
+
+@app.route("/academic/info", methods=["GET"])
+def academic_info():
+    return jsonify({"version": ACADEMIC_VERSION, "report": read_json("academic_report.json")})
+
+
 @app.route("/model/info", methods=["GET"])
 def model_info():
     registry = read_json("models/registry.json", [])

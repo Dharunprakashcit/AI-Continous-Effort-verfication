@@ -80,6 +80,20 @@ Log in as faculty to see the team overview, risk badges, and per-student agent e
 - **Faculty portal** (`/faculty`): Teams (every team as a card), a page per team (member scores, trend, activity, member table), a page per student (breakdown, reasons, review form), Analytics (risk distribution, team comparison, trends, model comparison and drift), Alerts.
 - The demo seed creates 4 teams and 17 students (`23cs001` to `23cs017`). Earlier weekly score snapshots are generated demo data so the trend charts have history.
 
+## Assignments, contribution shares and academic risk
+
+Faculty start at **Assignments** (`/faculty`):
+
+1. Connect Google Classroom, pick a course and sync. Assignments then appear.
+2. An **individual** assignment lists students with submitted, score, late, attempts and contribution (100% if submitted, 0% if not).
+3. A **team** assignment lists its teams. Open a team for each member's contribution share, tasks and status, then a member for the full analysis.
+
+**Google Classroom is simulated.** `backend/src/services/classroom.js` generates courses, coursework and submissions. A real provider would call `courses.list`, `courses.courseWork.list` and `studentSubmissions.list` with the faculty member's OAuth token and return the same shapes. Classroom has no individual/team concept, so the type is part of the simulated coursework.
+
+**Contribution share** (`backend/src/services/contribution.js`) is an estimate. Each student's share of the team is computed per component and weighted: tasks 40%, git 30%, documentation 10%, peer evaluation 10%, faculty evaluation 10%. A team's shares add to 100%. Git, document and rating data are seeded demo data, not collected from Classroom.
+
+**Academic risk** is a separate model (`ann-service/academic_model.py`) using attendance, marks, GPA, submissions, late submissions, assignment scores, contribution ratio and task completion. It is trained on simulated data, so its scores describe the method. Train it with `python academic_model.py`; without it the backend uses a rule-based fallback.
+
 ## AML layer: advanced machine learning workflow
 
 `ann-service/` also holds the practical ML lifecycle around the ANN:

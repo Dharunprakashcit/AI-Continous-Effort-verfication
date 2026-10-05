@@ -71,7 +71,7 @@ export function Ring({ value, size = 150, stroke = 14, color, caption }) {
   );
 }
 
-export function Donut({ segments, size = 180, stroke = 28, centerLabel }) {
+export function Donut({ segments, size = 180, stroke = 28, centerLabel, centerValue }) {
   const total = segments.reduce((a, s) => a + s.value, 0);
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
@@ -106,7 +106,7 @@ export function Donut({ segments, size = 180, stroke = 28, centerLabel }) {
             })}
         </svg>
         <div className="ring-text">
-          <strong>{total}</strong>
+          <strong>{centerValue ?? total}</strong>
           <span>{centerLabel}</span>
         </div>
       </div>

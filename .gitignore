@@ -11,3 +11,5 @@ ann-service/scaler.pkl
 .claude/
 ann-service/predictions_log.jsonl
 ann-service/models/
+ann-service/academic_model.pkl
+ann-service/academic_dataset.csv

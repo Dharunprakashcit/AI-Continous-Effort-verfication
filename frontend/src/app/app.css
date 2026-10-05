@@ -816,6 +816,54 @@
 .app .btn-outline {
   white-space: nowrap;
 }
+
+/* Assignment type pills, link rows and detail lists */
+.app .tpill {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.app .tpill.individual { background: #e7efff; color: #2f55b5; }
+.app .tpill.team { background: #eee6fb; color: #5b3aa3; }
+.app a.row-card {
+  text-decoration: none;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.app a.row-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(35, 45, 70, 0.14);
+}
+.app .row-card .grow {
+  flex: 1;
+  min-width: 0;
+}
+.app .kv {
+  display: grid;
+  grid-template-columns: minmax(120px, 200px) minmax(0, 1fr);
+  gap: 10px 16px;
+  margin: 0;
+  font-size: 0.9375rem;
+}
+.app .kv dt { color: var(--muted); }
+.app .kv dd { margin: 0; }
+.app .note {
+  background: #fff8e1;
+  border-left: 4px solid var(--medium);
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  margin-bottom: 20px;
+}
+.app .inline-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.app .status-ok { color: var(--low); font-weight: 600; }
+.app .status-bad { color: var(--high); font-weight: 600; }
 @media (max-width: 520px) {
   .app .brand-name {
     display: none;

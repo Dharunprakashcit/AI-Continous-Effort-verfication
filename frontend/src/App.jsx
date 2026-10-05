@@ -15,6 +15,10 @@ import TeamDetail from "./portal/TeamDetail.jsx";
 import FacultyStudent from "./portal/FacultyStudent.jsx";
 import Analytics from "./portal/Analytics.jsx";
 import Alerts from "./portal/Alerts.jsx";
+import AssignmentsPage from "./portal/AssignmentsPage.jsx";
+import AssignmentDetail from "./portal/AssignmentDetail.jsx";
+import TeamAssignment from "./portal/TeamAssignment.jsx";
+import StudentAnalysis from "./portal/StudentAnalysis.jsx";
 
 function PrivateRoute({ role, children }) {
   const { user } = useAuth();
@@ -51,7 +55,11 @@ function AppRoutes() {
           </PrivateRoute>
         }
       >
-        <Route path="/faculty" element={<TeamsPage />} />
+        <Route path="/faculty" element={<AssignmentsPage />} />
+        <Route path="/faculty/assignments/:id" element={<AssignmentDetail />} />
+        <Route path="/faculty/assignments/:id/teams/:teamId" element={<TeamAssignment />} />
+        <Route path="/faculty/assignments/:id/students/:studentId" element={<StudentAnalysis />} />
+        <Route path="/faculty/teams" element={<TeamsPage />} />
         <Route path="/faculty/teams/:teamId" element={<TeamDetail />} />
         <Route path="/faculty/students/:studentId" element={<FacultyStudent />} />
         <Route path="/faculty/analytics" element={<Analytics />} />
