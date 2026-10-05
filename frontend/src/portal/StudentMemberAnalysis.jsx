@@ -5,20 +5,21 @@ import { Avatar, PageState, Panel } from "../app/ui.jsx";
 import { Ring } from "../app/charts.jsx";
 
 export default function StudentMemberAnalysis() {
-  const { id, teamId, studentId } = useParams();
-  const { data, error, loading } = useApi(`/my/assignments/${id}/teams/${teamId}/members/${studentId}`);
+  const { id, studentId } = useParams();
+  const { data, error, loading } = useApi(`/my/assignments/${id}/members/${studentId}`);
   if (loading || error) return <PageState loading={loading} error={error} />;
 
   const { assignment, team, student, estimate, signals } = data;
 
   return (
     <>
-      <Link to={`/student/assignments/${id}/teams/${teamId}`} className="crumb">&larr; {team.name}</Link>
+      <Link to={`/student/assignments/${id}`} className="crumb">&larr; {assignment.title}</Link>
       <div className="profile">
         <div className="profile-main">
           <Avatar name={student.name} />
           <div>
             <h1>{student.name}{student.isMe ? " (you)" : ""}</h1>
+            <p className="meta">Contribution Analysis</p>
             <p className="meta">{team.name}, {assignment.title}</p>
           </div>
         </div>
@@ -27,12 +28,12 @@ export default function StudentMemberAnalysis() {
 
       <Panel title="Contribution analysis" dark>
         <dl className="kv">
-          <dt>Relevant discussions</dt><dd>{signals.discussions}</dd>
-          <dt>Comments and messages</dt><dd>{signals.messages}</dd>
-          <dt>Tasks completed</dt><dd>{signals.tasksDone}</dd>
-          <dt>Submission activity</dt><dd>{signals.submissionActivity}</dd>
-          <dt>Team participation</dt><dd>{signals.teamParticipation}</dd>
-          <dt><strong>Estimated contribution</strong></dt>
+          <dt>Comments / Discussions</dt><dd>{signals.commentsDiscussions}</dd>
+          <dt>Relevant interactions</dt><dd>{signals.relevantInteractions}</dd>
+          <dt>Tasks completed</dt><dd>{signals.tasksCompleted}</dd>
+          <dt>Submissions</dt><dd>{signals.submissions}</dd>
+          <dt>Project activity</dt><dd>{signals.projectActivity}</dd>
+          <dt><strong>Estimated Contribution</strong></dt>
           <dd><strong>{estimate != null ? `${estimate}%` : "Not enough activity yet"}</strong></dd>
         </dl>
         <p className="muted" style={{ marginTop: 16 }}>

@@ -6,8 +6,9 @@ import "./login.css";
 
 const DEMOS = [
   { label: "Faculty", email: "faculty@example.edu" },
-  { label: "Student", email: "23cs001@example.edu" },
-  { label: "High-risk student", email: "23cs004@example.edu" },
+  { label: "Student (Dharun)", email: "23cs001@example.edu" },
+  { label: "Low contributor (Meena)", email: "23cs005@example.edu" },
+  { label: "No team yet (Naveen)", email: "23cs008@example.edu" },
 ];
 
 function MailIcon() {

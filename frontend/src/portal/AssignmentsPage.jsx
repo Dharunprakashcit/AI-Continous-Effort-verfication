@@ -81,6 +81,36 @@ function ClassroomPanel({ status, onChanged }) {
   );
 }
 
+function DatasetDownload() {
+  const [state, setState] = useState("");
+
+  async function download() {
+    setState("Preparing");
+    try {
+      const { data } = await api.get("/assignments/dataset.csv", { responseType: "blob" });
+      const url = URL.createObjectURL(data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "student_assignment_records.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+      setState("");
+    } catch {
+      setState("Could not download the dataset.");
+    }
+  }
+
+  return (
+    <div className="inline-row" style={{ marginTop: 20 }}>
+      <button type="button" className="btn ghost" onClick={download} disabled={state === "Preparing"}>
+        {state === "Preparing" ? "Preparing" : "Download dataset (CSV)"}
+      </button>
+      <span className="muted">One row per student per assignment, for training the academic risk model.</span>
+      {state && state !== "Preparing" && <span className="msg err">{state}</span>}
+    </div>
+  );
+}
+
 function summary(a) {
   const t = a.totals;
   if (a.type === "individual") {
@@ -133,6 +163,7 @@ export default function AssignmentsPage() {
       ) : (
         <Panel><Empty>No assignments yet. Connect Google Classroom, choose a course and sync.</Empty></Panel>
       )}
+      {list.data?.length > 0 && <DatasetDownload />}
     </>
   );
 }

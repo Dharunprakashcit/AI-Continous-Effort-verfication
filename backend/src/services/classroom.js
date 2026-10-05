@@ -11,22 +11,18 @@ const Assignment = require("../models/Assignment");
 const Submission = require("../models/Submission");
 const Team = require("../models/Team");
 const User = require("../models/User");
+const { buildRecords } = require("./records");
 
 const DAY = 86400000;
 
-const COURSES = [
-  { id: "cs301", name: "CS301 Full Stack Web Development" },
-  { id: "cs305", name: "CS305 Advanced Machine Learning" },
-];
+const COURSES = [{ id: "aml", name: "Advanced Machine Learning" }];
 
 const COURSEWORK = {
-  cs301: [
-    { externalId: "cw-1", title: "Python Data Analysis", type: "individual", assignedDaysAgo: 35, dueDaysAgo: 28, description: "Clean and analyse a CSV dataset with pandas and report three findings." },
-    { externalId: "cw-2", title: "E-Commerce Application", type: "team", assignedDaysAgo: 30, dueDaysAgo: 5, description: "Build a working e-commerce site with product, cart and order features." },
-    { externalId: "cw-3", title: "SQL Database Design", type: "individual", assignedDaysAgo: 20, dueDaysAgo: 12, description: "Design a normalised schema and write the queries for a case study." },
-    { externalId: "cw-4", title: "Mobile App Prototype", type: "team", assignedDaysAgo: 6, dueDaysAgo: -9, description: "Prototype a mobile app for a campus service." },
+  aml: [
+    { externalId: "cw-1", title: "Linear Regression from Scratch", type: "individual", assignedDaysAgo: 40, dueDaysAgo: 30, description: "Implement linear regression with gradient descent and compare it with a library model." },
+    { externalId: "cw-2", title: "Student Performance Prediction", type: "team", assignedDaysAgo: 28, dueDaysAgo: 4, description: "Build and evaluate models that predict student performance from attendance, marks and activity data." },
+    { externalId: "cw-3", title: "Neural Network Implementation", type: "individual", assignedDaysAgo: 12, dueDaysAgo: -6, description: "Build a small neural network and report its training behaviour." },
   ],
-  cs305: [],
 };
 
 function listCourses() {
@@ -72,26 +68,26 @@ function simulateIndividual(assignment, student) {
   const r = rng(`${assignment.externalId}:${student._id}`);
   const marks = student.internalMarks ?? 60;
   const attendance = student.attendancePct ?? 80;
-  const submitted = r() < clamp((marks - 20) / 80 + 0.32, 0.15, 0.98);
+  const pastDue = assignment.dueDate.getTime() < Date.now();
+  const chance = clamp((marks - 20) / 80 + 0.32, 0.15, 0.98) * (pastDue ? 1 : 0.45);
+  const submitted = r() < chance;
   if (!submitted) return { submitted: false, attempts: 0, late: false };
 
-  const late = r() < clamp((1 - attendance / 100) * 1.1 + 0.03, 0.03, 0.5);
+  const late = pastDue && r() < clamp((1 - attendance / 100) * 1.1 + 0.03, 0.03, 0.5);
   const offset = late ? 1 + r() * 3 : r() * 5;
-  const submittedAt = new Date(assignment.dueDate.getTime() + (late ? offset : -offset) * DAY);
-  const score = Math.round(clamp(marks + (r() - 0.5) * 20, 20, 100));
+  const submittedAt = pastDue
+    ? new Date(assignment.dueDate.getTime() + (late ? offset : -offset) * DAY)
+    : new Date(Date.now() - (0.2 + r() * 3) * DAY);
   const attempts = 1 + Math.floor(r() * (marks < 55 ? 3 : 2));
   const comments = [];
   if (late) comments.push("Turned in after the due date.");
   if (attempts > 1) comments.push(`Resubmitted ${attempts - 1} time${attempts > 2 ? "s" : ""} before grading.`);
-  return {
-    submitted: true,
-    submittedAt,
-    late,
-    score,
-    attempts,
-    feedback: feedbackFor(score),
-    comments,
-  };
+
+  if (!pastDue) {
+    return { submitted: true, submittedAt, late: false, attempts, feedback: "Awaiting grading.", comments };
+  }
+  const score = Math.round(clamp(marks + (r() - 0.5) * 20, 20, 100));
+  return { submitted: true, submittedAt, late, score, attempts, feedback: feedbackFor(score), comments };
 }
 
 function simulateTeam(assignment, team, members) {
@@ -159,7 +155,8 @@ async function syncCourse(facultyId, courseId) {
     imported.push({ id: assignment._id, title: assignment.title, type: assignment.type });
   }
 
-  return { course, imported, submissions };
+  const records = await buildRecords(facultyId);
+  return { course, imported, submissions, records };
 }
 
 module.exports = { COURSES, COURSEWORK, listCourses, courseworkFor, syncCourse };

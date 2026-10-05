@@ -9,7 +9,6 @@ import Privacy from "./site/Privacy.jsx";
 import StudentOverview from "./portal/StudentOverview.jsx";
 import StudentAssignments from "./portal/StudentAssignments.jsx";
 import StudentAssignmentDetail from "./portal/StudentAssignmentDetail.jsx";
-import StudentTeamPage from "./portal/StudentTeamPage.jsx";
 import StudentMemberAnalysis from "./portal/StudentMemberAnalysis.jsx";
 import StudentActivity from "./portal/StudentActivity.jsx";
 import StudentTasks from "./portal/StudentTasks.jsx";
@@ -49,8 +48,7 @@ function AppRoutes() {
         <Route path="/student" element={<StudentOverview />} />
         <Route path="/student/assignments" element={<StudentAssignments />} />
         <Route path="/student/assignments/:id" element={<StudentAssignmentDetail />} />
-        <Route path="/student/assignments/:id/teams/:teamId" element={<StudentTeamPage />} />
-        <Route path="/student/assignments/:id/teams/:teamId/members/:studentId" element={<StudentMemberAnalysis />} />
+        <Route path="/student/assignments/:id/members/:studentId" element={<StudentMemberAnalysis />} />
         <Route path="/student/activity" element={<StudentActivity />} />
         <Route path="/student/tasks" element={<StudentTasks />} />
         <Route path="/student/feedback" element={<StudentFeedback />} />

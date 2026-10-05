@@ -59,7 +59,7 @@ Seed prints the demo login credentials, e.g.:
 
 ```
 Faculty login:  faculty@example.edu / password123
-Student logins: 23cs001@example.edu ... 23cs004@example.edu / password123
+Student logins: 23cs001@example.edu ... 23cs009@example.edu / password123
 ```
 
 The seeded students have deliberately different patterns (strong / average / declining / free-rider) so the faculty dashboard shows a realistic spread of risk levels immediately.
@@ -78,7 +78,7 @@ Log in as faculty to see the team overview, risk badges, and per-student agent e
 
 - **Student portal** (`/student`): Overview (score ring, rank in team, activity chart, tasks), Activity (log work, daily breakdown), Tasks (update status), AI feedback (score breakdown, trend, reasons).
 - **Faculty portal** (`/faculty`): Teams (every team as a card), a page per team (member scores, trend, activity, member table), a page per student (breakdown, reasons, review form), Analytics (risk distribution, team comparison, trends, model comparison and drift), Alerts.
-- The demo seed creates 4 teams and 17 students (`23cs001` to `23cs017`). Earlier weekly score snapshots are generated demo data so the trend charts have history.
+- The demo seed is the **Advanced Machine Learning** course with 9 students (`23cs001` to `23cs009`), 3 assignments and these teams for Assignment 2: Team 1 (Dharun, Arun, Priya), Team 2 (Karthik, Meena), Team 3 (Sanjay, Divya). Naveen (`23cs008`) and Rekha (`23cs009`) are not on a team yet, so they can create one. Earlier weekly score snapshots are generated demo data so the trend charts have history.
 
 ## Assignments, contribution shares and academic risk
 
@@ -88,11 +88,13 @@ Faculty start at **Assignments** (`/faculty`):
 2. An **individual** assignment lists students with submitted, score, late, attempts and contribution (100% if submitted, 0% if not).
 3. A **team** assignment lists its teams. Open a team for each member's contribution share, tasks and status, then a member for the full analysis.
 
-**Student portal assignments** (`/student/assignments`) has three filters: All, Individual Assignments and Contributed Assignments. Individual assignments show details, submission, comments, feedback and activity history. Contributed (team) assignments list the teams and are the only place a team can be created, by a student or by faculty (**+ Create Team**). Creating a team never sets contribution. Shares are always estimated from recorded activity, so a newly created team gets estimates from its members' commits and document edits since the assignment was set, and shows "Not enough activity yet" when nothing is recorded. Students can open only their own team.
+**Student portal assignments** (`/student/assignments`) has two tabs: Individual and Contributed. Individual cards show due date, submission status, marks, student activity and faculty feedback, and open to the full submission and activity history. Contributed cards show due date, team, team members and the student's estimated contribution, and open to the team with every member's percentage. **+ Create Team** exists only on contributed assignments (disabled once the student is on a team), for students and faculty. Creating a team never sets contribution. Shares are always estimated from recorded activity, so a newly created team gets estimates from its members' commits and document edits since the assignment was set, and shows "Not enough activity yet" when nothing is recorded. Students can open only their own team.
 
 **Google Classroom is simulated.** `backend/src/services/classroom.js` generates courses, coursework and submissions. A real provider would call `courses.list`, `courses.courseWork.list` and `studentSubmissions.list` with the faculty member's OAuth token and return the same shapes. Classroom has no individual/team concept, so the type is part of the simulated coursework.
 
 **Contribution share** (`backend/src/services/contribution.js`) is an estimate. Each student's share of the team is computed per component and weighted: tasks 40%, git 30%, documentation 10%, peer evaluation 10%, faculty evaluation 10%. A team's shares add to 100%. Git, document and rating data are seeded demo data, not collected from Classroom.
+
+**Feature table for the risk model.** Each Classroom sync (and each new team) rebuilds `StudentAssignmentRecord`, one row per student per assignment: `student_id, assignment_id, assignment_type, team_id, attendance, assignment_score, submission_status, late_submission, comments_count, relevant_comments, tasks_completed, project_interactions, activity_score, contribution_score`. Faculty can download it from the Assignments page. `node scripts/generate-dataset.js 60` builds a large cohort (about 650 rows) in `ann-service/data/student_assignment_records.csv` using an in-memory database. The sample file there is generated demo data, not real students.
 
 **Academic risk** is a separate model (`ann-service/academic_model.py`) using attendance, marks, GPA, submissions, late submissions, assignment scores, contribution ratio and task completion. It is trained on simulated data, so its scores describe the method. Train it with `python academic_model.py`; without it the backend uses a rule-based fallback.
 

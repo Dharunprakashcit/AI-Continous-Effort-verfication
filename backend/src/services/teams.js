@@ -1,6 +1,7 @@
 const Team = require("../models/Team");
 const User = require("../models/User");
 const Assignment = require("../models/Assignment");
+const { buildAssignmentRecords } = require("./records");
 
 function fail(status, message) {
   const err = new Error(message);
@@ -45,6 +46,7 @@ async function createTeam(assignment, { name, memberIds }) {
     members: ids,
   });
   await Assignment.updateOne({ _id: assignment._id }, { $push: { teams: team._id } });
+  await buildAssignmentRecords(await Assignment.findById(assignment._id).lean());
   return team;
 }
 

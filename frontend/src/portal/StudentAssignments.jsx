@@ -6,24 +6,70 @@ import { IconBook } from "../app/icons.jsx";
 import { TypePill, fmtDate } from "./AssignmentsPage.jsx";
 
 const FILTERS = [
-  ["all", "All"],
-  ["individual", "Individual Assignments"],
-  ["team", "Contributed Assignments"],
+  ["individual", "Individual"],
+  ["team", "Contributed"],
 ];
+
+function IndividualCard({ a }) {
+  return (
+    <>
+      <div className="grow">
+        <div className="title">{a.title}</div>
+        <dl className="kv" style={{ marginTop: 8, gridTemplateColumns: "minmax(120px, 160px) minmax(0, 1fr)", gap: "4px 12px" }}>
+          <dt>Due date</dt><dd>{fmtDate(a.dueDate)}</dd>
+          <dt>Submission</dt>
+          <dd className={a.submitted ? "status-ok" : "status-bad"}>
+            {a.submitted ? (a.late ? "Submitted late" : "Submitted") : "Not submitted"}
+          </dd>
+          <dt>Marks</dt><dd>{a.score != null ? `${a.score}/${a.maxScore}` : "Not graded yet"}</dd>
+          <dt>Student activity</dt><dd>{a.activity ? `${a.activity.level} (score ${a.activity.score})` : "None recorded"}</dd>
+          <dt>Faculty feedback</dt><dd>{a.feedback || "None yet"}</dd>
+        </dl>
+      </div>
+      <div className="end">
+        <Link className="btn small" to={`/student/assignments/${a.id}`}>View Activity</Link>
+      </div>
+    </>
+  );
+}
+
+function ContributedCard({ a }) {
+  return (
+    <>
+      <div className="grow">
+        <div className="title">{a.title}</div>
+        <dl className="kv" style={{ marginTop: 8, gridTemplateColumns: "minmax(120px, 160px) minmax(0, 1fr)", gap: "4px 12px" }}>
+          <dt>Due date</dt><dd>{fmtDate(a.dueDate)}</dd>
+          <dt>Team</dt><dd>{a.team ? a.team.name : "You are not on a team yet"}</dd>
+          <dt>Team members</dt><dd>{a.team ? a.team.members.join(", ") : "None"}</dd>
+          <dt>Contribution</dt>
+          <dd>
+            {a.team
+              ? a.team.myContribution != null ? `Your estimated contribution is ${a.team.myContribution}%` : "Not enough activity yet"
+              : "Create or join a team to see your contribution"}
+          </dd>
+        </dl>
+      </div>
+      <div className="end">
+        <Link className="btn small" to={`/student/assignments/${a.id}`}>Contribution Analysis</Link>
+      </div>
+    </>
+  );
+}
 
 export default function StudentAssignments() {
   const { data, error, loading } = useApi("/my/assignments");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("individual");
   if (loading || error) return <PageState loading={loading} error={error} />;
 
-  const shown = data.filter((a) => filter === "all" || a.type === filter);
+  const shown = data.filter((a) => a.type === filter);
 
   return (
     <>
       <div className="page-head">
         <div>
           <h1>Assignments</h1>
-          <p className="sub">Imported from Google Classroom (simulated)</p>
+          <p className="sub">Advanced Machine Learning, imported from Google Classroom (simulated)</p>
         </div>
       </div>
 
@@ -46,30 +92,10 @@ export default function StudentAssignments() {
       ) : (
         <ul className="rows">
           {shown.map((a, i) => (
-            <li key={a.id} className="row-card" style={{ animationDelay: `${i * 70}ms` }}>
+            <li key={a.id} className="row-card" style={{ animationDelay: `${i * 70}ms`, alignItems: "flex-start" }}>
               <span className="ico"><IconBook /></span>
-              <div className="grow">
-                <div className="title">{a.title}</div>
-                <div className="sub">Due {fmtDate(a.dueDate)}</div>
-                {a.type === "individual" ? (
-                  <div className="sub">
-                    {a.submitted ? (a.late ? "Submitted late" : "Submitted") : "Not submitted"}
-                    {a.score != null ? `, score ${a.score}/${a.maxScore}` : ""}
-                  </div>
-                ) : (
-                  <div className="sub">
-                    Team project, {a.teamCount} teams{a.myTeam ? `, you are in ${a.myTeam.name}` : ", you are not on a team yet"}
-                  </div>
-                )}
-              </div>
-              <div className="end">
-                <TypePill type={a.type} />
-                <div style={{ marginTop: 8 }}>
-                  <Link className="btn small" to={`/student/assignments/${a.id}`}>
-                    {a.type === "individual" ? "View Activity" : "View Teams"}
-                  </Link>
-                </div>
-              </div>
+              {a.type === "individual" ? <IndividualCard a={a} /> : <ContributedCard a={a} />}
+              <div><TypePill type={a.type} /></div>
             </li>
           ))}
         </ul>

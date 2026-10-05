@@ -28,7 +28,7 @@ function Individual({ data }) {
               {s.submitted ? (s.late ? "Submitted late" : "Submitted") : "Not submitted"}
             </dd>
             <dt>Submitted on</dt><dd>{s.submitted ? fmtDateTime(s.submittedAt) : "None"}</dd>
-            <dt>Score</dt><dd>{s.score != null ? `${s.score}/${a.maxScore}` : "None"}</dd>
+            <dt>Marks</dt><dd>{s.score != null ? `${s.score}/${a.maxScore}` : "Not graded yet"}</dd>
             <dt>Attempts</dt><dd>{s.attempts}</dd>
           </dl>
         </Panel>
@@ -43,13 +43,13 @@ function Individual({ data }) {
             <Empty>No comments.</Empty>
           )}
         </Panel>
-        <Panel title="Feedback">
+        <Panel title="Faculty feedback">
           {s.feedback ? <p>{s.feedback}</p> : <Empty>No feedback yet.</Empty>}
         </Panel>
       </div>
 
       <div style={{ height: 24 }} />
-      <Panel title="Activity history, last 14 days" dark>
+      <Panel title="Student activity, last 14 days" dark>
         <div className="table-wrap">
           <table>
             <thead><tr><th>Day</th><th>Document edits</th><th>Commits</th><th>Messages</th><th>Replies</th></tr></thead>
@@ -67,6 +67,8 @@ function Individual({ data }) {
 
 function Contributed({ id, data, reload }) {
   const [creating, setCreating] = useState(false);
+  const team = data.myTeam;
+
   return (
     <>
       <Panel title="Assignment details" dark>
@@ -78,36 +80,46 @@ function Contributed({ id, data, reload }) {
       </Panel>
 
       <Panel
-        title="Teams"
+        title={team ? team.name : "Your team"}
         dark
         action={
-          data.canCreateTeam && !creating ? (
-            <button type="button" className="btn small ghost" onClick={() => setCreating(true)}>+ Create Team</button>
-          ) : null
+          <button
+            type="button"
+            className="btn small ghost"
+            disabled={!data.canCreateTeam || creating}
+            onClick={() => setCreating(true)}
+          >
+            + Create Team
+          </button>
         }
       >
-        {data.teams.length === 0 ? (
-          <Empty>No teams have been created for this assignment yet.</Empty>
+        {team ? (
+          <>
+            <p className="note">
+              Contribution is an estimate calculated by the system from recorded activity. It is not entered by
+              students and is not a grade.
+            </p>
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>Student</th><th>Contribution</th><th></th></tr></thead>
+                <tbody>
+                  {team.members.map((m) => (
+                    <tr key={m.id} className="row-link">
+                      <td>{m.name}{m.isMe && <span className="muted"> (you)</span>}</td>
+                      <td><strong>{m.contribution != null ? `${m.contribution}%` : "Not enough activity yet"}</strong></td>
+                      <td><Link className="row-open" to={`/student/assignments/${id}/members/${m.id}`}>Contribution Analysis</Link></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="muted" style={{ marginTop: 12 }}>
+              You are already on a team for this assignment, so a new team cannot be created.
+            </p>
+          </>
         ) : (
-          <ul className="rows">
-            {data.teams.map((t) => (
-              <li key={t.id} className="row-card" style={{ boxShadow: "none", border: "1px solid var(--line)" }}>
-                <div className="grow">
-                  <div className="title">{t.name}</div>
-                  <div className="sub">{t.memberCount} Members{t.isMine ? ", your team" : ""}</div>
-                </div>
-                <div className="end">
-                  {t.isMine ? (
-                    <Link className="btn small" to={`/student/assignments/${id}/teams/${t.id}`}>Open team</Link>
-                  ) : (
-                    <span className="muted">Only members can open a team</span>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
+          <Empty>You are not on a team for this assignment yet. Use Create Team to form one.</Empty>
         )}
-        {!data.canCreateTeam && <p className="muted" style={{ marginTop: 12 }}>You are already on a team for this assignment.</p>}
       </Panel>
 
       {creating && (
@@ -121,6 +133,19 @@ function Contributed({ id, data, reload }) {
               reload();
             }}
           />
+        </Panel>
+      )}
+
+      {data.otherTeams.length > 0 && (
+        <Panel title="Other teams">
+          <ul className="rows" style={{ gap: 8 }}>
+            {data.otherTeams.map((t) => (
+              <li key={t.id} className="inline-row">
+                <strong>{t.name}</strong>
+                <span className="muted">{t.memberCount} Members</span>
+              </li>
+            ))}
+          </ul>
         </Panel>
       )}
     </>

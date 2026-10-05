@@ -1,15 +1,22 @@
 /**
- * Seeds demo data: 1 faculty, 4 teams, 17 students with different behaviour
- * patterns, academic profiles, 4 assignments (2 individual, 2 team), tasks and
- * git, document and rating signals for the team assignments, 7 days of activity,
- * a live pipeline run per student, and 5 weeks of earlier prediction snapshots.
+ * Seeds the Advanced Machine Learning demo:
  *
- * Assignments exist but stay hidden until the faculty member syncs Google
- * Classroom (simulated), which imports submissions and scores.
- * Weekly snapshots and signals are generated demo data.
+ *   Course: Advanced Machine Learning
+ *     Assignment 1  individual   Linear Regression from Scratch
+ *     Assignment 2  contributed  Student Performance Prediction
+ *         Team 1: Dharun, Arun, Priya
+ *         Team 2: Karthik, Meena
+ *         Team 3: Sanjay, Divya
+ *     Assignment 3  individual   Neural Network Implementation
+ *   Naveen and Rekha are not on an Assignment 2 team yet, so they can create one.
  *
- * Exports seedDatabase() so both `npm run seed` and the zero-setup demo runner
- * (`npm run demo`) can reuse it against an already-connected mongoose instance.
+ * Assignments stay hidden until the faculty member syncs Google Classroom
+ * (simulated). The sync imports submissions and builds the student-assignment
+ * feature table used for the academic risk model. Activity, signals, ratings and
+ * earlier weekly snapshots are generated demo data.
+ *
+ * seedDatabase({ extraTeams, runPipeline }) can add many more teams and skip the
+ * live agent pipeline, to produce a larger dataset for model training.
  */
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
@@ -22,99 +29,66 @@ const Prediction = require("../src/models/Prediction");
 const Assignment = require("../src/models/Assignment");
 const Submission = require("../src/models/Submission");
 const Contribution = require("../src/models/Contribution");
+const StudentAssignmentRecord = require("../src/models/StudentAssignmentRecord");
 const { runPipelineForStudent } = require("../src/agents/orchestrator");
 const { courseworkFor } = require("../src/services/classroom");
 
-const TEAMS = [
-  {
-    name: "Team Alpha",
-    project: "Smart Team Contribution Monitoring",
-    students: [
-      ["Aditi Rao", "23CS001", "strong"],
-      ["Bala Krishnan", "23CS002", "average"],
-      ["Chitra Menon", "23CS003", "declining"],
-      ["Dhruv Nair", "23CS004", "freerider"],
-    ],
-  },
-  {
-    name: "Team Beta",
-    project: "Campus Navigation App",
-    students: [
-      ["Esha Verma", "23CS005", "strong"],
-      ["Farhan Ali", "23CS006", "strong"],
-      ["Gita Pillai", "23CS007", "average"],
-      ["Harish Kumar", "23CS008", "declining"],
-    ],
-  },
-  {
-    name: "Team Gamma",
-    project: "Library Management System",
-    students: [
-      ["Isha Menon", "23CS009", "average"],
-      ["Jai Singh", "23CS010", "freerider"],
-      ["Kavya Iyer", "23CS011", "improving"],
-      ["Lakshmi Rao", "23CS012", "freerider"],
-      ["Manoj Das", "23CS013", "average"],
-    ],
-  },
-  {
-    name: "Team Delta",
-    project: "Weather Data Dashboard",
-    students: [
-      ["Nisha Joseph", "23CS014", "strong"],
-      ["Omar Sheikh", "23CS015", "average"],
-      ["Priya Nair", "23CS016", "strong"],
-      ["Rahul Menon", "23CS017", "improving"],
-    ],
-  },
+const BASE_TEAMS = [
+  { name: "Team 1", project: "Student Performance Prediction", inA2: true, students: [["Dharun", "23CS001", "strong"], ["Arun", "23CS002", "average"], ["Priya", "23CS003", "declining"]] },
+  { name: "Team 2", project: "Student Performance Prediction", inA2: true, students: [["Karthik", "23CS004", "average"], ["Meena", "23CS005", "freerider"]] },
+  { name: "Team 3", project: "Student Performance Prediction", inA2: true, students: [["Sanjay", "23CS006", "strong"], ["Divya", "23CS007", "improving"]] },
+  { name: "Team 4", project: "Awaiting team formation", inA2: false, students: [["Naveen", "23CS008", "average"], ["Rekha", "23CS009", "freerider"]] },
 ];
 
 const PATTERNS = {
-  strong: { docEdits: [4, 6], commits: [2, 4], messagesSent: [3, 5], repliesGiven: [1, 3], taskCompletion: 0.9,
+  strong: { docEdits: [4, 6], commits: [2, 4], messagesSent: [3, 5], repliesGiven: [1, 3], active: 0.8, taskCompletion: 0.9,
     academic: { att: [90, 98], marks: [75, 92], gpa: [8.2, 9.4] }, signals: { commits: [22, 36], prs: [4, 8], files: [14, 26], docs: [3, 6], peer: [4.2, 4.9], faculty: [4.1, 4.9] } },
-  improving: { docEdits: [3, 5], commits: [1, 3], messagesSent: [2, 4], repliesGiven: [1, 2], taskCompletion: 0.75,
+  improving: { docEdits: [3, 5], commits: [1, 3], messagesSent: [2, 4], repliesGiven: [1, 2], active: 0.65, taskCompletion: 0.75,
     academic: { att: [80, 90], marks: [65, 80], gpa: [7.4, 8.4] }, signals: { commits: [14, 24], prs: [3, 6], files: [9, 18], docs: [2, 5], peer: [3.7, 4.4], faculty: [3.6, 4.4] } },
-  average: { docEdits: [2, 4], commits: [1, 2], messagesSent: [1, 3], repliesGiven: [0, 2], taskCompletion: 0.6,
+  average: { docEdits: [2, 4], commits: [1, 2], messagesSent: [1, 3], repliesGiven: [0, 2], active: 0.6, taskCompletion: 0.6,
     academic: { att: [75, 88], marks: [55, 72], gpa: [6.8, 7.8] }, signals: { commits: [10, 18], prs: [2, 4], files: [6, 13], docs: [1, 3], peer: [3.2, 4.0], faculty: [3.2, 4.0] } },
-  declining: { docEdits: [0, 2], commits: [0, 1], messagesSent: [0, 2], repliesGiven: [0, 1], taskCompletion: 0.4,
+  declining: { docEdits: [0, 2], commits: [0, 1], messagesSent: [0, 2], repliesGiven: [0, 1], active: 0.45, taskCompletion: 0.4,
     academic: { att: [62, 78], marks: [42, 60], gpa: [6.0, 7.2] }, signals: { commits: [5, 10], prs: [1, 2], files: [3, 8], docs: [0, 2], peer: [2.6, 3.4], faculty: [2.6, 3.4] } },
-  freerider: { docEdits: [0, 1], commits: [0, 0], messagesSent: [0, 1], repliesGiven: [0, 0], taskCompletion: 0.15,
+  freerider: { docEdits: [0, 1], commits: [0, 0], messagesSent: [0, 1], repliesGiven: [0, 0], active: 0.25, taskCompletion: 0.15,
     academic: { att: [50, 70], marks: [30, 52], gpa: [5.0, 6.4] }, signals: { commits: [0, 4], prs: [0, 1], files: [0, 3], docs: [0, 1], peer: [1.5, 2.6], faculty: [1.5, 2.6] } },
 };
 
-// Task titles by assignment, one list per member slot in a team.
-const TASK_POOLS = {
-  "cw-2": [
-    ["Backend API", "Authentication", "Product API", "Order API"],
-    ["Frontend shell", "Product pages", "Cart and checkout", "Responsive layout"],
-    ["Schema design", "Seed data", "Query optimisation"],
-    ["Requirements document", "User manual", "Test report"],
-    ["Unit tests", "Integration tests", "Bug triage"],
-  ],
-  "cw-4": [
-    ["Screen designs", "Navigation flow", "Form validation"],
-    ["API client", "State management", "Offline cache"],
-    ["Backend endpoints", "Push notifications", "Auth tokens"],
-    ["User guide", "Demo script", "Test plan"],
-    ["Device testing", "Performance checks", "Accessibility review"],
-  ],
-};
+// Task titles for the team assignment, one list per member slot.
+const TASK_POOLS = [
+  ["Data cleaning", "Feature engineering", "Exploratory analysis", "Train-test split"],
+  ["Baseline models", "Hyperparameter tuning", "Model comparison", "Cross-validation"],
+  ["Evaluation metrics", "Report writing", "Presentation slides", "Error analysis"],
+];
+const STARTER_TASKS = ["Literature review", "Dataset collection", "Draft proposal"];
 
 const DAY = 86400000;
+const randInt = ([min, max]) => Math.floor(Math.random() * (max - min + 1)) + min;
+const randFloat = ([min, max]) => Math.round((min + Math.random() * (max - min)) * 10) / 10;
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
-function randInt([min, max]) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-function randFloat([min, max]) {
-  return Math.round((min + Math.random() * (max - min)) * 10) / 10;
-}
-function clamp(v, lo, hi) {
-  return Math.max(lo, Math.min(hi, v));
-}
 function levelFor(overallRisk) {
   if (overallRisk < 30) return { riskLevel: "LOW", decision: "ALLOW" };
   if (overallRisk <= 70) return { riskLevel: "MEDIUM", decision: "NUDGE" };
   return { riskLevel: "HIGH", decision: "ALERT" };
+}
+
+function pickPattern() {
+  const r = Math.random();
+  return r < 0.25 ? "strong" : r < 0.6 ? "average" : r < 0.72 ? "improving" : r < 0.87 ? "declining" : "freerider";
+}
+
+// Extra teams for a large training dataset.
+function extraTeamSpecs(n) {
+  let counter = 0;
+  return Array.from({ length: n }, (_, i) => ({
+    name: `Cohort Team ${i + 1}`,
+    project: "Student Performance Prediction",
+    inA2: true,
+    students: Array.from({ length: 3 + (i % 2) }, () => {
+      counter += 1;
+      return [`Student ${String(counter).padStart(3, "0")}`, `24CS${String(counter).padStart(3, "0")}`, pickPattern()];
+    }),
+  }));
 }
 
 // Earlier weekly snapshots that lead up to the live prediction (generated demo data).
@@ -123,7 +97,6 @@ async function seedHistory(student, team, pattern) {
   if (!latest) return;
   const trendPerWeek = { declining: 7, freerider: 3, improving: -6, strong: 0, average: 0 }[pattern];
   const noise = pattern === "strong" || pattern === "average" ? 4 : 2;
-
   for (let w = 1; w <= 5; w++) {
     const score = clamp(latest.contributionScore + trendPerWeek * w + randInt([-noise, noise]), 3, 98);
     const overallRisk = 100 - score;
@@ -144,25 +117,20 @@ async function seedHistory(student, team, pattern) {
   }
 }
 
-async function seedDatabase() {
+async function seedDatabase({ extraTeams = 0, runPipeline = true } = {}) {
   console.log("Clearing existing demo collections...");
   await Promise.all(
-    [User, Team, Task, Activity, Prediction, Assignment, Submission, Contribution].map((m) => m.deleteMany({}))
+    [User, Team, Task, Activity, Prediction, Assignment, Submission, Contribution, StudentAssignmentRecord].map((m) => m.deleteMany({}))
   );
 
   const passwordHash = await bcrypt.hash("password123", 10);
+  const faculty = await User.create({ name: "Dr. Vishnu Menon", email: "faculty@example.edu", passwordHash, role: "faculty" });
 
-  const faculty = await User.create({
-    name: "Dr. Vishnu Menon",
-    email: "faculty@example.edu",
-    passwordHash,
-    role: "faculty",
-  });
-
-  const teams = [];
+  const specs = [...BASE_TEAMS, ...extraTeamSpecs(extraTeams)];
+  const groups = [];
   const everyone = [];
 
-  for (const spec of TEAMS) {
+  for (const spec of specs) {
     const team = await Team.create({ name: spec.name, projectTitle: spec.project, faculty: faculty._id, members: [] });
     const members = [];
     for (const [name, registerNo, pattern] of spec.students) {
@@ -182,16 +150,16 @@ async function seedDatabase() {
     }
     team.members = members.map((m) => m.doc._id);
     await team.save();
-    teams.push({ team, members });
+    groups.push({ team, members, inA2: spec.inA2 });
     members.forEach((m) => everyone.push({ ...m, team }));
   }
 
   // Assignments exist from the start but stay hidden until a Classroom sync.
   const assignments = {};
-  for (const cw of courseworkFor("cs301")) {
+  for (const cw of courseworkFor("aml")) {
     assignments[cw.externalId] = await Assignment.create({
       faculty: faculty._id,
-      course: { id: "cs301", name: "CS301 Full Stack Web Development" },
+      course: { id: "aml", name: "Advanced Machine Learning" },
       externalId: cw.externalId,
       title: cw.title,
       description: cw.description,
@@ -199,53 +167,58 @@ async function seedDatabase() {
       assignedDate: cw.assignedDate,
       dueDate: cw.dueDate,
       maxScore: cw.maxScore,
-      // Mobile App Prototype starts with two teams. The rest of the class forms its own.
-      teams: cw.type !== "team" ? [] : (cw.externalId === "cw-4" ? teams.slice(0, 2) : teams).map((t) => t.team._id),
+      teams: cw.type === "team" ? groups.filter((g) => g.inA2).map((g) => g.team._id) : [],
     });
   }
+  const a2 = assignments["cw-2"];
+  const a2Past = a2.dueDate.getTime() < Date.now();
 
-  for (const { team, members } of teams) {
+  for (const { team, members, inA2 } of groups) {
     for (const [slot, m] of members.entries()) {
       const p = PATTERNS[m.pattern];
 
-      for (const cwId of ["cw-2", "cw-4"]) {
-        const assignment = assignments[cwId];
-        if (!assignment.teams.some((t) => String(t) === String(team._id))) continue;
-        const pastDue = assignment.dueDate.getTime() < Date.now();
-        const pool = TASK_POOLS[cwId][slot % TASK_POOLS[cwId].length];
-        for (const title of pool) {
-          let status;
-          let completedAt;
-          if (pastDue) {
-            const done = Math.random() < p.taskCompletion;
-            status = done ? "Completed" : "Late";
-            completedAt = done ? new Date(assignment.dueDate.getTime() - DAY * (1 + Math.random() * 4)) : undefined;
-          } else {
-            const done = Math.random() < p.taskCompletion * 0.45;
-            status = done ? "Completed" : Math.random() < 0.55 ? "In Progress" : "Not Started";
-            completedAt = done ? new Date() : undefined;
-          }
-          await Task.create({ title, team: team._id, assignment: assignment._id, assignedTo: m.doc._id, deadline: assignment.dueDate, status, completedAt });
+      if (inA2) {
+        for (const title of TASK_POOLS[slot % TASK_POOLS.length]) {
+          const done = Math.random() < p.taskCompletion;
+          await Task.create({
+            title,
+            team: team._id,
+            assignment: a2._id,
+            assignedTo: m.doc._id,
+            deadline: a2.dueDate,
+            status: done ? "Completed" : a2Past ? "Late" : "In Progress",
+            completedAt: done ? new Date(a2.dueDate.getTime() - DAY * (1 + Math.random() * 4)) : undefined,
+          });
         }
-
-        const scale = pastDue ? 1 : 0.45;
         const s = p.signals;
         await Contribution.create({
-          assignment: assignment._id,
+          assignment: a2._id,
           team: team._id,
           student: m.doc._id,
-          commits: Math.round(randInt(s.commits) * scale),
-          pullRequests: Math.round(randInt(s.prs) * scale),
-          filesModified: Math.round(randInt(s.files) * scale),
-          docPages: Math.round(randInt(s.docs) * scale),
+          commits: randInt(s.commits),
+          pullRequests: randInt(s.prs),
+          filesModified: randInt(s.files),
+          docPages: randInt(s.docs),
           peerRating: randFloat(s.peer),
-          facultyRating: pastDue ? randFloat(s.faculty) : undefined,
+          facultyRating: randFloat(s.faculty),
         });
+      } else {
+        for (const title of STARTER_TASKS) {
+          const done = Math.random() < p.taskCompletion;
+          await Task.create({
+            title,
+            team: team._id,
+            assignedTo: m.doc._id,
+            deadline: new Date(Date.now() + 7 * DAY),
+            status: done ? "Completed" : "In Progress",
+            completedAt: done ? new Date() : undefined,
+          });
+        }
       }
 
-      for (let d = 0; d < 7; d++) {
-        if (m.pattern === "freerider" && Math.random() < 0.6) continue;
-        if (m.pattern === "declining" && Math.random() < 0.3) continue;
+      // 30 days of activity so assignment windows have real numbers.
+      for (let d = 0; d < 30; d++) {
+        if (Math.random() > p.active) continue;
         const date = new Date();
         date.setHours(0, 0, 0, 0);
         date.setDate(date.getDate() - d);
@@ -263,19 +236,21 @@ async function seedDatabase() {
     }
   }
 
-  console.log("Running agent pipeline for each student...");
-  for (const s of everyone) {
-    try {
-      await runPipelineForStudent(s.doc._id, s.team._id);
-      await seedHistory(s.doc, s.team, s.pattern);
-    } catch (err) {
-      console.warn(`Prediction failed for ${s.name}:`, err.message);
+  if (runPipeline) {
+    console.log("Running agent pipeline for each student...");
+    for (const s of everyone) {
+      try {
+        await runPipelineForStudent(s.doc._id, s.team._id);
+        await seedHistory(s.doc, s.team, s.pattern);
+      } catch (err) {
+        console.warn(`Prediction failed for ${s.name}:`, err.message);
+      }
     }
   }
 
   console.log("\nSeed complete.");
   console.log("Faculty login:  faculty@example.edu / password123");
-  console.log("Student logins: 23cs001@example.edu ... 23cs017@example.edu / password123");
+  console.log("Student logins: 23cs001@example.edu ... 23cs009@example.edu / password123");
   console.log("Assignments appear after the faculty connects Google Classroom (simulated) and syncs.");
 
   return { faculty };

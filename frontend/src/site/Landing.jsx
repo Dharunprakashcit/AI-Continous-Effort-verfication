@@ -196,7 +196,7 @@ function Closing() {
           <h2 id="closing-title">Open the demo.</h2>
           <p className="lede" style={{ marginTop: "var(--s3)" }}>
             Sign in as faculty with faculty@example.edu, or as a student with an address from
-            23cs001@example.edu through 23cs004@example.edu. The password for every demo account is
+            23cs001@example.edu through 23cs009@example.edu. The password for every demo account is
             password123.
           </p>
         </div>

@@ -62,17 +62,17 @@ async function teamBreakdown(assignment, teamId) {
     const id = String(m._id);
     const mine = tasks.filter((t) => String(t.assignedTo) === id);
     const rec = records.find((r) => String(r.student) === id);
-    const act = activities
-      .filter((a) => String(a.student) === id)
-      .reduce(
-        (s, a) => ({
-          docEdits: s.docEdits + a.docEdits,
-          commits: s.commits + a.commits,
-          messages: s.messages + a.messagesSent,
-          replies: s.replies + a.repliesGiven,
-        }),
-        { docEdits: 0, commits: 0, messages: 0, replies: 0 }
-      );
+    const mineActs = activities.filter((a) => String(a.student) === id);
+    const act = mineActs.reduce(
+      (s, a) => ({
+        ...s,
+        docEdits: s.docEdits + a.docEdits,
+        commits: s.commits + a.commits,
+        messages: s.messages + a.messagesSent,
+        replies: s.replies + a.repliesGiven,
+      }),
+      { days: new Set(mineActs.map((a) => new Date(a.date).toDateString())).size, docEdits: 0, commits: 0, messages: 0, replies: 0 }
+    );
 
     const git = rec
       ? { commits: rec.commits, pullRequests: rec.pullRequests, filesModified: rec.filesModified }
@@ -138,20 +138,4 @@ async function teamBreakdown(assignment, teamId) {
   };
 }
 
-const level = (ratio) => (ratio >= 1.15 ? "High" : ratio >= 0.6 ? "Medium" : "Low");
-
-// The activity behind one member's estimate, in plain terms for students.
-function memberSignals(row, rows) {
-  const work = (r) => r.git.commits + 3 * r.git.pullRequests + 2 * r.docs.pages;
-  const avgWork = rows.reduce((a, r) => a + work(r), 0) / (rows.length || 1);
-  const fair = rows.length ? 100 / rows.length : 0;
-  return {
-    discussions: row.activity.replies,
-    messages: row.activity.messages,
-    tasksDone: row.tasksDone,
-    submissionActivity: avgWork > 0 ? level(work(row) / avgWork) : "None recorded",
-    teamParticipation: row.contribution == null ? "Not enough activity yet" : level(row.contribution / fair),
-  };
-}
-
-module.exports = { teamBreakdown, memberSignals, WEIGHTS };
+module.exports = { teamBreakdown, WEIGHTS };

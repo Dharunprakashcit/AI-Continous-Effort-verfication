@@ -9,6 +9,7 @@ const { teamBreakdown, WEIGHTS } = require("../services/contribution");
 const { predictAcademicRisk } = require("../services/academicRisk");
 const { activityByDay } = require("../services/stats");
 const { availableStudents, createTeam } = require("../services/teams");
+const { recordsToCsv } = require("../services/records");
 
 const facultyOnly = [requireAuth, requireRole("faculty")];
 const wrap = (fn) => (req, res, next) => fn(req, res, next).catch(next);
@@ -71,6 +72,18 @@ router.get(
       })
     );
     res.json(out);
+  })
+);
+
+// Feature table for the academic risk model, one row per student per assignment.
+router.get(
+  "/dataset.csv",
+  ...facultyOnly,
+  wrap(async (req, res) => {
+    const csv = await recordsToCsv(req.user.id);
+    res.set("Content-Type", "text/csv");
+    res.set("Content-Disposition", 'attachment; filename="student_assignment_records.csv"');
+    res.send(csv);
   })
 );
 

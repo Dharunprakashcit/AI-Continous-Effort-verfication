@@ -2,8 +2,10 @@ const router = require("express").Router();
 const Assignment = require("../models/Assignment");
 const Submission = require("../models/Submission");
 const Team = require("../models/Team");
+const StudentAssignmentRecord = require("../models/StudentAssignmentRecord");
 const { requireAuth, requireRole } = require("../middleware/auth");
-const { teamBreakdown, memberSignals } = require("../services/contribution");
+const { teamBreakdown } = require("../services/contribution");
+const { activityLevel, activityScore, windowDaysFor } = require("../services/records");
 const { availableStudents, createTeam, studentFaculty } = require("../services/teams");
 const { activityByDay } = require("../services/stats");
 
@@ -29,7 +31,12 @@ async function visibleAssignment(req) {
 
 const myTeamIn = (a, studentId) => Team.findOne({ _id: { $in: a.teams }, members: studentId }).lean();
 
-// All synced assignments, individual and team, for the student's faculty.
+const memberRows = (b, myId) =>
+  b.rows
+    .map((r) => ({ id: r.student.id, name: r.student.name, contribution: r.contribution, isMe: String(r.student.id) === String(myId) }))
+    .sort((x, y) => (y.contribution ?? -1) - (x.contribution ?? -1));
+
+// All synced assignments, with the fields each tab needs.
 router.get(
   "/",
   ...studentOnly,
@@ -37,16 +44,34 @@ router.get(
     const { facultyId } = await studentFaculty(req.user.id);
     if (!facultyId) return res.json([]);
     const assignments = await Assignment.find({ faculty: facultyId, syncedAt: { $ne: null } }).sort({ assignedDate: 1 }).lean();
-    const subs = await Submission.find({ student: req.user.id, assignment: { $in: assignments.map((a) => a._id) } }).lean();
+    const ids = assignments.map((a) => a._id);
+    const [subs, records] = await Promise.all([
+      Submission.find({ student: req.user.id, assignment: { $in: ids } }).lean(),
+      StudentAssignmentRecord.find({ student: req.user.id, assignment: { $in: ids } }).lean(),
+    ]);
 
     const out = [];
     for (const a of assignments) {
+      const rec = records.find((r) => String(r.assignment) === String(a._id));
       if (a.type === "individual") {
         const s = subs.find((x) => String(x.assignment) === String(a._id));
-        out.push({ ...header(a), submitted: !!s?.submitted, late: !!s?.late, score: s?.score ?? null });
+        out.push({
+          ...header(a),
+          submitted: !!s?.submitted,
+          late: !!s?.late,
+          score: s?.score ?? null,
+          feedback: s?.feedback ?? null,
+          activity: rec ? { score: rec.activityScore, level: activityLevel(rec.activityScore) } : null,
+        });
       } else {
         const mine = await myTeamIn(a, req.user.id);
-        out.push({ ...header(a), teamCount: a.teams.length, myTeam: mine ? { id: mine._id, name: mine.name } : null });
+        let team = null;
+        if (mine) {
+          const b = await teamBreakdown(a, mine._id);
+          const rows = memberRows(b, req.user.id);
+          team = { id: mine._id, name: mine.name, members: rows.map((r) => r.name), myContribution: rows.find((r) => r.isMe)?.contribution ?? null };
+        }
+        out.push({ ...header(a), team });
       }
     }
     res.json(out);
@@ -62,22 +87,26 @@ router.get(
 
     if (a.type === "individual") {
       const s = await Submission.findOne({ assignment: a._id, student: req.user.id }).lean();
-      const days = await activityByDay({ student: req.user.id }, 14);
       return res.json({
         kind: "individual",
         assignment: header(a),
         submission: s || { submitted: false, attempts: 0, comments: [] },
-        activity: days,
+        activity: await activityByDay({ student: req.user.id }, 14),
       });
     }
 
     const teams = await Team.find({ _id: { $in: a.teams } }).lean();
     const mine = teams.find((t) => t.members.some((m) => String(m) === String(req.user.id)));
+    let myTeam = null;
+    if (mine) {
+      const b = await teamBreakdown(a, mine._id);
+      myTeam = { id: mine._id, name: mine.name, members: memberRows(b, req.user.id) };
+    }
     res.json({
       kind: "team",
       assignment: header(a),
-      teams: teams.map((t) => ({ id: t._id, name: t.name, memberCount: t.members.length, isMine: mine && String(mine._id) === String(t._id) })),
-      myTeamId: mine?._id || null,
+      myTeam,
+      otherTeams: teams.filter((t) => !mine || String(t._id) !== String(mine._id)).map((t) => ({ id: t._id, name: t.name, memberCount: t.members.length })),
       canCreateTeam: !mine,
     });
   })
@@ -113,48 +142,33 @@ router.post(
   })
 );
 
-// Students open only their own team. Other teams show a name and size, nothing more.
-async function ownTeam(req, a) {
-  const mine = await myTeamIn(a, req.user.id);
-  return mine && String(mine._id) === req.params.teamId ? mine : null;
-}
-
+// Students open only their own team's members.
 router.get(
-  "/:id/teams/:teamId",
+  "/:id/members/:studentId",
   ...studentOnly,
   wrap(async (req, res) => {
     const a = await visibleAssignment(req);
     if (!a || a.type !== "team") return res.status(404).json({ error: "Assignment not found" });
-    if (!(await ownTeam(req, a))) return res.status(403).json({ error: "You can only open your own team." });
+    const mine = await myTeamIn(a, req.user.id);
+    if (!mine) return res.status(403).json({ error: "You can only open your own team." });
 
-    const b = await teamBreakdown(a, req.params.teamId);
-    res.json({
-      assignment: header(a),
-      team: b.team,
-      rows: b.rows
-        .map((r) => ({ student: { id: r.student.id, name: r.student.name }, contribution: r.contribution, isMe: String(r.student.id) === String(req.user.id) }))
-        .sort((x, y) => (y.contribution ?? -1) - (x.contribution ?? -1)),
-    });
-  })
-);
-
-router.get(
-  "/:id/teams/:teamId/members/:studentId",
-  ...studentOnly,
-  wrap(async (req, res) => {
-    const a = await visibleAssignment(req);
-    if (!a || a.type !== "team") return res.status(404).json({ error: "Assignment not found" });
-    if (!(await ownTeam(req, a))) return res.status(403).json({ error: "You can only open your own team." });
-
-    const b = await teamBreakdown(a, req.params.teamId);
+    const b = await teamBreakdown(a, mine._id);
     const row = b.rows.find((r) => String(r.student.id) === req.params.studentId);
-    if (!row) return res.status(404).json({ error: "Member not found" });
+    if (!row) return res.status(404).json({ error: "Member not found on your team" });
+
+    const score = activityScore(row.activity, windowDaysFor(a));
     res.json({
       assignment: header(a),
       team: b.team,
       student: { id: row.student.id, name: row.student.name, isMe: String(row.student.id) === String(req.user.id) },
       estimate: row.contribution,
-      signals: memberSignals(row, b.rows),
+      signals: {
+        commentsDiscussions: row.activity.messages + row.activity.replies,
+        relevantInteractions: row.activity.replies,
+        tasksCompleted: row.tasksDone,
+        submissions: row.git.commits,
+        projectActivity: activityLevel(score),
+      },
     });
   })
 );
