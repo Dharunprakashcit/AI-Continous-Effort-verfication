@@ -14,7 +14,7 @@ export default function TeamAssignment() {
   if (loading || error) return <PageState loading={loading} error={error} />;
 
   const { assignment: a, team, rows, submission: s, weights } = data;
-  const sorted = [...rows].sort((x, y) => y.contribution - x.contribution);
+  const sorted = [...rows].sort((x, y) => (y.contribution ?? -1) - (x.contribution ?? -1));
   const colored = sorted.map((r, i) => ({ ...r, color: SHARE_COLORS[i % SHARE_COLORS.length] }));
 
   return (
@@ -46,13 +46,13 @@ export default function TeamAssignment() {
           <Donut
             centerValue="100%"
             centerLabel="of the team"
-            segments={colored.map((r) => ({ label: r.student.name, value: r.contribution, color: r.color }))}
+            segments={colored.map((r) => ({ label: r.student.name, value: r.contribution ?? 0, color: r.color }))}
           />
         </Panel>
         <Panel title="Contribution by member">
           <HBars
             items={colored.map((r) => ({ label: r.student.name, value: r.contribution, color: r.color }))}
-            max={Math.max(50, ...rows.map((r) => r.contribution))}
+            max={Math.max(50, ...rows.map((r) => r.contribution ?? 0))}
             unit="%"
           />
         </Panel>
@@ -69,7 +69,7 @@ export default function TeamAssignment() {
               {sorted.map((r) => (
                 <tr key={r.student.id} className="row-link">
                   <td>{r.student.name} <span className="muted">({r.student.registerNo})</span></td>
-                  <td><strong>{r.contribution}%</strong></td>
+                  <td><strong>{r.contribution != null ? `${r.contribution}%` : "Not enough activity yet"}</strong></td>
                   <td>{r.tasksDone} of {r.tasksTotal} done</td>
                   <td>{r.status}</td>
                   <td><Link className="row-open" to={`/faculty/assignments/${id}/students/${r.student.id}`}>View analysis</Link></td>

@@ -22,7 +22,7 @@ async function ownedStudent(req, studentId) {
 
 // Every team the faculty member owns, with the numbers shown on a team card.
 router.get("/teams", ...facultyOnly, async (req, res) => {
-  const teams = await Team.find({ faculty: req.user.id }).lean();
+  const teams = await Team.find({ faculty: req.user.id, assignment: null }).lean();
   const out = await Promise.all(
     teams.map(async (t) => {
       const latest = [...(await latestByStudent(t.members)).values()];
@@ -71,7 +71,7 @@ router.get("/teams/:teamId/overview", ...facultyOnly, async (req, res) => {
 
 // Cross-team analytics.
 router.get("/analytics", ...facultyOnly, async (req, res) => {
-  const teams = await Team.find({ faculty: req.user.id }).lean();
+  const teams = await Team.find({ faculty: req.user.id, assignment: null }).lean();
   const allIds = teams.flatMap((t) => t.members);
   const latest = await latestByStudent(allIds);
   const latestAll = [...latest.values()];
@@ -134,7 +134,7 @@ router.post("/students/:studentId/predict", ...facultyOnly, async (req, res) => 
 
 // Students who currently need a nudge or an alert (latest prediction only), highest risk first.
 router.get("/alerts", ...facultyOnly, async (req, res) => {
-  const teams = await Team.find({ faculty: req.user.id }).lean();
+  const teams = await Team.find({ faculty: req.user.id, assignment: null }).lean();
   const teamName = new Map(teams.map((t) => [String(t._id), t.name]));
   const latest = await latestByStudent(teams.flatMap((t) => t.members));
 

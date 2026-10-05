@@ -199,7 +199,8 @@ async function seedDatabase() {
       assignedDate: cw.assignedDate,
       dueDate: cw.dueDate,
       maxScore: cw.maxScore,
-      teams: cw.type === "team" ? teams.map((t) => t.team._id) : [],
+      // Mobile App Prototype starts with two teams. The rest of the class forms its own.
+      teams: cw.type !== "team" ? [] : (cw.externalId === "cw-4" ? teams.slice(0, 2) : teams).map((t) => t.team._id),
     });
   }
 
@@ -209,6 +210,7 @@ async function seedDatabase() {
 
       for (const cwId of ["cw-2", "cw-4"]) {
         const assignment = assignments[cwId];
+        if (!assignment.teams.some((t) => String(t) === String(team._id))) continue;
         const pastDue = assignment.dueDate.getTime() < Date.now();
         const pool = TASK_POOLS[cwId][slot % TASK_POOLS[cwId].length];
         for (const title of pool) {

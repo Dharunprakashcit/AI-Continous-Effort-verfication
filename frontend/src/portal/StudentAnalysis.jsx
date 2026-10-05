@@ -82,7 +82,7 @@ function TeamAnalysis({ data }) {
                 {c.components.map((x) => (
                   <tr key={x.key}><td>{x.label}</td><td>{x.weight}%</td><td>{x.teamShare}%</td><td>{x.points}</td></tr>
                 ))}
-                <tr><td><strong>Total</strong></td><td>100%</td><td></td><td><strong>{c.exact}</strong></td></tr>
+                <tr><td><strong>Total</strong></td><td>100%</td><td></td><td><strong>{c.exact ?? "None"}</strong></td></tr>
               </tbody>
             </table>
           </div>
@@ -172,7 +172,11 @@ export default function StudentAnalysis() {
           </div>
         </div>
         {isTeam ? (
-          <Ring value={data.contribution.contribution} caption="of team contribution" color={colorForScore(Math.min(100, data.contribution.contribution * data.teamSize))} />
+          <Ring
+            value={data.contribution.contribution}
+            caption="of team contribution"
+            color={data.contribution.contribution == null ? RISK_COLOR.UNKNOWN : colorForScore(Math.min(100, data.contribution.contribution * data.teamSize))}
+          />
         ) : (
           <Ring value={data.submission.submitted ? 100 : 0} caption="contribution" color={data.submission.submitted ? RISK_COLOR.LOW : RISK_COLOR.HIGH} />
         )}

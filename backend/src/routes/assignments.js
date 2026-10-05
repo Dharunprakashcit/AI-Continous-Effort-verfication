@@ -8,6 +8,7 @@ const { requireAuth, requireRole } = require("../middleware/auth");
 const { teamBreakdown, WEIGHTS } = require("../services/contribution");
 const { predictAcademicRisk } = require("../services/academicRisk");
 const { activityByDay } = require("../services/stats");
+const { availableStudents, createTeam } = require("../services/teams");
 
 const facultyOnly = [requireAuth, requireRole("faculty")];
 const wrap = (fn) => (req, res, next) => fn(req, res, next).catch(next);
@@ -19,7 +20,7 @@ async function ownedAssignment(req) {
 }
 
 async function facultyStudents(facultyId) {
-  const teams = await Team.find({ faculty: facultyId }).populate("members", "name registerNo").lean();
+  const teams = await Team.find({ faculty: facultyId, assignment: null }).populate("members", "name registerNo").lean();
   return { teams, students: teams.flatMap((t) => t.members.map((m) => ({ ...m, teamName: t.name, teamId: t._id }))) };
 }
 
@@ -103,9 +104,10 @@ router.get(
       teams.map(async (t) => {
         const sub = (a.teamSubmissions || []).find((s) => String(s.team) === String(t._id));
         const b = await teamBreakdown(a, t._id);
-        const shares = b.rows.map((r) => r.contribution);
-        const top = b.rows.reduce((m, r) => (r.contribution > m.contribution ? r : m), b.rows[0]);
-        const low = b.rows.reduce((m, r) => (r.contribution < m.contribution ? r : m), b.rows[0]);
+        const known = b.rows.filter((r) => r.contribution != null);
+        const shares = known.map((r) => r.contribution);
+        const top = known.reduce((m, r) => (r.contribution > m.contribution ? r : m), known[0]);
+        const low = known.reduce((m, r) => (r.contribution < m.contribution ? r : m), known[0]);
         return {
           team: { id: t._id, name: t.name, projectTitle: t.projectTitle },
           memberCount: t.members.length,
@@ -114,11 +116,38 @@ router.get(
           score: sub?.score ?? null,
           highest: top ? { name: top.student.name, share: top.contribution } : null,
           lowest: low ? { name: low.student.name, share: low.contribution } : null,
-          spread: shares.length ? Math.max(...shares) - Math.min(...shares) : 0,
+          spread: shares.length ? Math.max(...shares) - Math.min(...shares) : null,
         };
       })
     );
     res.json({ assignment: assignmentHeader(a), rows, weights: Object.entries(WEIGHTS).map(([k, w]) => ({ key: k, weight: Math.round(w * 100) })) });
+  })
+);
+
+router.get(
+  "/:id/available-students",
+  ...facultyOnly,
+  wrap(async (req, res) => {
+    const a = await ownedAssignment(req);
+    if (!a || a.type !== "team") return res.status(404).json({ error: "Team assignment not found" });
+    const list = await availableStudents(a);
+    res.json(list.map((s) => ({ id: s._id, name: s.name, registerNo: s.registerNo })));
+  })
+);
+
+// Creating a team organises the project. It never sets anyone's contribution.
+router.post(
+  "/:id/teams",
+  ...facultyOnly,
+  wrap(async (req, res) => {
+    const a = await ownedAssignment(req);
+    if (!a) return res.status(404).json({ error: "Assignment not found" });
+    try {
+      const team = await createTeam(a, req.body);
+      res.status(201).json({ id: team._id, name: team.name });
+    } catch (err) {
+      res.status(err.status || 500).json({ error: err.message });
+    }
   })
 );
 
@@ -162,9 +191,12 @@ router.get(
       });
     }
 
-    const b = await teamBreakdown(a, student.team?._id);
+    const memberTeam = await Team.findOne({ _id: { $in: a.teams }, members: student._id }).lean();
+    const b = memberTeam ? await teamBreakdown(a, memberTeam._id) : null;
     const row = b?.rows.find((r) => String(r.student.id) === String(student._id));
     if (!row) return res.status(404).json({ error: "Student is not on a team for this assignment" });
+    base.student.teamId = memberTeam._id;
+    base.student.teamName = memberTeam.name;
     const tasks = await Task.find({ assignment: a._id, assignedTo: student._id }).lean();
     res.json({
       ...base,

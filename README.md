@@ -88,6 +88,8 @@ Faculty start at **Assignments** (`/faculty`):
 2. An **individual** assignment lists students with submitted, score, late, attempts and contribution (100% if submitted, 0% if not).
 3. A **team** assignment lists its teams. Open a team for each member's contribution share, tasks and status, then a member for the full analysis.
 
+**Student portal assignments** (`/student/assignments`) has three filters: All, Individual Assignments and Contributed Assignments. Individual assignments show details, submission, comments, feedback and activity history. Contributed (team) assignments list the teams and are the only place a team can be created, by a student or by faculty (**+ Create Team**). Creating a team never sets contribution. Shares are always estimated from recorded activity, so a newly created team gets estimates from its members' commits and document edits since the assignment was set, and shows "Not enough activity yet" when nothing is recorded. Students can open only their own team.
+
 **Google Classroom is simulated.** `backend/src/services/classroom.js` generates courses, coursework and submissions. A real provider would call `courses.list`, `courses.courseWork.list` and `studentSubmissions.list` with the faculty member's OAuth token and return the same shapes. Classroom has no individual/team concept, so the type is part of the simulated coursework.
 
 **Contribution share** (`backend/src/services/contribution.js`) is an estimate. Each student's share of the team is computed per component and weighted: tasks 40%, git 30%, documentation 10%, peer evaluation 10%, faculty evaluation 10%. A team's shares add to 100%. Git, document and rating data are seeded demo data, not collected from Classroom.

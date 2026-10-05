@@ -19,6 +19,7 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/faculty", facultyRoutes);
 app.use("/api/classroom", classroomRoutes);
 app.use("/api/assignments", assignmentRoutes);
+app.use("/api/my/assignments", require("./routes/myAssignments"));
 
 app.use((err, req, res, next) => {
   console.error(err);

@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import CreateTeamForm from "./CreateTeamForm.jsx";
 import useApi from "../app/useApi";
 import { PageState, Panel, StatCard } from "../app/ui.jsx";
 import { CountUp } from "../app/charts.jsx";
@@ -72,8 +73,9 @@ function Individual({ id, data }) {
   );
 }
 
-function TeamList({ id, data }) {
+function TeamList({ id, data, reload }) {
   const { rows, weights } = data;
+  const [creating, setCreating] = useState(false);
   return (
     <>
       <p className="note">
@@ -81,7 +83,11 @@ function TeamList({ id, data }) {
         They are not a measure of effort. The spread column shows the gap between the largest and smallest share
         in each team.
       </p>
-      <Panel title="Teams" dark>
+      <Panel
+        title="Teams"
+        dark
+        action={!creating ? <button type="button" className="btn small ghost" onClick={() => setCreating(true)}>+ Create Team</button> : null}
+      >
         <div className="table-wrap">
           <table>
             <thead>
@@ -96,7 +102,7 @@ function TeamList({ id, data }) {
                   <td>{r.score ?? "None"}</td>
                   <td>{r.highest ? `${r.highest.name} ${r.highest.share}%` : "None"}</td>
                   <td>{r.lowest ? `${r.lowest.name} ${r.lowest.share}%` : "None"}</td>
-                  <td>{r.spread} points</td>
+                  <td>{r.spread != null ? `${r.spread} points` : "None"}</td>
                   <td><Link className="row-open" to={`/faculty/assignments/${id}/teams/${r.team.id}`}>View team</Link></td>
                 </tr>
               ))}
@@ -104,20 +110,33 @@ function TeamList({ id, data }) {
           </table>
         </div>
       </Panel>
+      {creating && (
+        <Panel title="Create Team">
+          <CreateTeamForm
+            assignmentId={id}
+            base="assignments"
+            onCancel={() => setCreating(false)}
+            onCreated={() => {
+              setCreating(false);
+              reload();
+            }}
+          />
+        </Panel>
+      )}
     </>
   );
 }
 
 export default function AssignmentDetail() {
   const { id } = useParams();
-  const { data, error, loading } = useApi(`/assignments/${id}`);
+  const { data, error, loading, reload } = useApi(`/assignments/${id}`);
   if (loading || error) return <PageState loading={loading} error={error} />;
 
   return (
     <>
       <Header a={data.assignment} />
       <div style={{ height: 24 }} />
-      {data.assignment.type === "individual" ? <Individual id={id} data={data} /> : <TeamList id={id} data={data} />}
+      {data.assignment.type === "individual" ? <Individual id={id} data={data} /> : <TeamList id={id} data={data} reload={reload} />}
     </>
   );
 }

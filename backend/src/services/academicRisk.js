@@ -3,6 +3,7 @@ const Assignment = require("../models/Assignment");
 const Submission = require("../models/Submission");
 const Task = require("../models/Task");
 const User = require("../models/User");
+const Team = require("../models/Team");
 const { teamBreakdown } = require("./contribution");
 
 const ANN_URL = process.env.ANN_SERVICE_URL || "http://127.0.0.1:5001";
@@ -18,12 +19,14 @@ async function academicFeatures(studentId) {
   const submitted = subs.filter((s) => s.submitted);
   const scored = submitted.filter((s) => s.score != null);
 
-  const teamWork = await Assignment.find({ type: "team", syncedAt: { $ne: null }, teams: student.team }).lean();
+  const teamWork = await Assignment.find({ type: "team", syncedAt: { $ne: null } }).lean();
   const ratios = [];
   for (const a of teamWork) {
-    const b = await teamBreakdown(a, student.team);
+    const mine = await Team.findOne({ _id: { $in: a.teams }, members: studentId }).lean();
+    if (!mine) continue;
+    const b = await teamBreakdown(a, mine._id);
     const row = b?.rows.find((r) => String(r.student.id) === String(studentId));
-    if (row && b.rows.length) ratios.push((row.contribution / 100) * b.rows.length);
+    if (row && row.contribution != null) ratios.push((row.contribution / 100) * b.rows.length);
   }
 
   const tasks = await Task.find({ assignedTo: studentId }).lean();

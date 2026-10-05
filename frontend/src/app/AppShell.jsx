@@ -8,6 +8,7 @@ import "./app.css";
 const NAV = {
   student: [
     { to: "/student", label: "Overview", icon: <IconUser />, end: true },
+    { to: "/student/assignments", label: "Assignments", icon: <IconBook /> },
     { to: "/student/activity", label: "Activity", icon: <IconPulse /> },
     { to: "/student/tasks", label: "Tasks", icon: <IconTasks /> },
     { to: "/student/feedback", label: "AI feedback", icon: <IconChat /> },

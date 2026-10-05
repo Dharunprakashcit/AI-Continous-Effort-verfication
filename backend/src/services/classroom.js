@@ -79,13 +79,18 @@ function simulateIndividual(assignment, student) {
   const offset = late ? 1 + r() * 3 : r() * 5;
   const submittedAt = new Date(assignment.dueDate.getTime() + (late ? offset : -offset) * DAY);
   const score = Math.round(clamp(marks + (r() - 0.5) * 20, 20, 100));
+  const attempts = 1 + Math.floor(r() * (marks < 55 ? 3 : 2));
+  const comments = [];
+  if (late) comments.push("Turned in after the due date.");
+  if (attempts > 1) comments.push(`Resubmitted ${attempts - 1} time${attempts > 2 ? "s" : ""} before grading.`);
   return {
     submitted: true,
     submittedAt,
     late,
     score,
-    attempts: 1 + Math.floor(r() * (marks < 55 ? 3 : 2)),
+    attempts,
     feedback: feedbackFor(score),
+    comments,
   };
 }
 
@@ -114,8 +119,8 @@ async function syncCourse(facultyId, courseId) {
   const course = COURSES.find((c) => c.id === courseId);
   if (!course) throw new Error("Unknown course");
 
-  const teams = await Team.find({ faculty: facultyId }).populate("members").lean();
-  const students = teams.flatMap((t) => t.members);
+  const baseTeams = await Team.find({ faculty: facultyId, assignment: null }).populate("members").lean();
+  const students = baseTeams.flatMap((t) => t.members);
   const work = courseworkFor(courseId);
 
   let submissions = 0;
@@ -145,10 +150,11 @@ async function syncCourse(facultyId, courseId) {
       await Submission.insertMany(docs);
       submissions += docs.length;
     } else {
-      if (!assignment.teams.length) assignment.teams = teams.map((t) => t._id);
-      assignment.teamSubmissions = teams.map((t) => simulateTeam(assignment, t, t.members));
+      if (!assignment.teams.length) assignment.teams = baseTeams.map((t) => t._id);
+      const formed = await Team.find({ _id: { $in: assignment.teams } }).populate("members").lean();
+      assignment.teamSubmissions = formed.map((t) => simulateTeam(assignment, t, t.members));
       await assignment.save();
-      submissions += teams.length;
+      submissions += formed.length;
     }
     imported.push({ id: assignment._id, title: assignment.title, type: assignment.type });
   }

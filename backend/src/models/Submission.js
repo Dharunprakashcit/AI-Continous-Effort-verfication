@@ -11,6 +11,7 @@ const submissionSchema = new mongoose.Schema(
     score: Number,
     attempts: { type: Number, default: 0 },
     feedback: String,
+    comments: [String],
   },
   { timestamps: true }
 );
