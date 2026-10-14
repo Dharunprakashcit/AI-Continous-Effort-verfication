@@ -1,0 +1,9 @@
+data
+mlruns
+figures
+report
+tests
+artifacts/*.pkl
+!artifacts/champion.pkl
+__pycache__
+*.pyc

@@ -1,0 +1,192 @@
+{
+  "counts": {
+    "correct": 166,
+    "missed_fail": 35,
+    "false_alarm": 8
+  },
+  "by_segment": {
+    "course": [
+      {
+        "course": "mat",
+        "n": 82.0,
+        "error_rate": 0.232
+      },
+      {
+        "course": "por",
+        "n": 127.0,
+        "error_rate": 0.189
+      }
+    ],
+    "failures": [
+      {
+        "failures": 0,
+        "n": 179.0,
+        "error_rate": 0.173
+      },
+      {
+        "failures": 1,
+        "n": 20.0,
+        "error_rate": 0.45
+      },
+      {
+        "failures": 2,
+        "n": 5.0,
+        "error_rate": 0.0
+      },
+      {
+        "failures": 3,
+        "n": 5.0,
+        "error_rate": 0.6
+      }
+    ],
+    "higher": [
+      {
+        "higher": "no",
+        "n": 18.0,
+        "error_rate": 0.444
+      },
+      {
+        "higher": "yes",
+        "n": 191.0,
+        "error_rate": 0.183
+      }
+    ],
+    "school": [
+      {
+        "school": "GP",
+        "n": 153.0,
+        "error_rate": 0.144
+      },
+      {
+        "school": "MS",
+        "n": 56.0,
+        "error_rate": 0.375
+      }
+    ],
+    "sex": [
+      {
+        "sex": "F",
+        "n": 128.0,
+        "error_rate": 0.211
+      },
+      {
+        "sex": "M",
+        "n": 81.0,
+        "error_rate": 0.198
+      }
+    ]
+  },
+  "threshold_tradeoff": [
+    {
+      "threshold": 0.3,
+      "missed_fail": 45,
+      "false_alarm": 0
+    },
+    {
+      "threshold": 0.35,
+      "missed_fail": 42,
+      "false_alarm": 3
+    },
+    {
+      "threshold": 0.4,
+      "missed_fail": 40,
+      "false_alarm": 5
+    },
+    {
+      "threshold": 0.45,
+      "missed_fail": 38,
+      "false_alarm": 7
+    },
+    {
+      "threshold": 0.5,
+      "missed_fail": 35,
+      "false_alarm": 8
+    },
+    {
+      "threshold": 0.55,
+      "missed_fail": 33,
+      "false_alarm": 8
+    },
+    {
+      "threshold": 0.6,
+      "missed_fail": 31,
+      "false_alarm": 11
+    },
+    {
+      "threshold": 0.65,
+      "missed_fail": 29,
+      "false_alarm": 15
+    },
+    {
+      "threshold": 0.7,
+      "missed_fail": 26,
+      "false_alarm": 23
+    },
+    {
+      "threshold": 0.75,
+      "missed_fail": 21,
+      "false_alarm": 34
+    }
+  ],
+  "shap_top": {
+    "course_por": 0.41940000653266907,
+    "failures": 0.36730000376701355,
+    "school_MS": 0.2011999934911728,
+    "has_failed": 0.13130000233650208,
+    "higher_yes": 0.12449999898672104,
+    "absences": 0.10220000147819519,
+    "guardian_father": 0.07450000196695328,
+    "Fedu": 0.06340000033378601,
+    "goout": 0.0632999986410141,
+    "schoolsup_yes": 0.061500001698732376,
+    "support": 0.05609999969601631,
+    "log_absences": 0.052299998700618744,
+    "parent_edu": 0.04960000142455101,
+    "social": 0.04610000178217888,
+    "traveltime": 0.04610000178217888
+  },
+  "pca_components_95": 29,
+  "encoded_dims": 50,
+  "missed_fail_profile": {
+    "absences": {
+      "count": 35.0,
+      "mean": 5.4,
+      "std": 5.44,
+      "min": 0.0,
+      "25%": 0.0,
+      "50%": 4.0,
+      "75%": 8.5,
+      "max": 18.0
+    },
+    "failures": {
+      "count": 35.0,
+      "mean": 0.17,
+      "std": 0.57,
+      "min": 0.0,
+      "25%": 0.0,
+      "50%": 0.0,
+      "75%": 0.0,
+      "max": 3.0
+    },
+    "studytime": {
+      "count": 35.0,
+      "mean": 1.91,
+      "std": 0.85,
+      "min": 1.0,
+      "25%": 1.0,
+      "50%": 2.0,
+      "75%": 2.0,
+      "max": 4.0
+    },
+    "G3": {
+      "count": 35.0,
+      "mean": 6.31,
+      "std": 3.36,
+      "min": 0.0,
+      "25%": 6.0,
+      "50%": 8.0,
+      "75%": 9.0,
+      "max": 9.0
+    }
+  }
+}

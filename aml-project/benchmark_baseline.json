@@ -1,0 +1,9 @@
+{
+  "paper": "P. Cortez and A. Silva, \"Using data mining to predict secondary school student performance,\" in Proc. 5th Future Business Technology Conf. (FUBUTEC), Porto, Portugal, 2008, pp. 5-12.",
+  "task": "binary pass/fail (G3 >= 10), accuracy (PCC %), 20 runs of 10-fold CV",
+  "note": "Best baseline accuracy per setup as reported in the paper. VERIFY these numbers against Table 3 of the original paper before submission.",
+  "results": {
+    "mat": {"A": {"model": "NV", "acc": 91.9}, "B": {"model": "NV", "acc": 83.8}, "C": {"model": "SVM", "acc": 70.6}},
+    "por": {"A": {"model": "DT", "acc": 93.0}, "B": {"model": "RF", "acc": 90.1}, "C": {"model": "RF", "acc": 85.0}}
+  }
+}

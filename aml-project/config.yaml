@@ -1,0 +1,28 @@
+# Advanced ML project configuration: early prediction of student failure
+# Dataset: UCI Student Performance (Cortez & Silva, 2008), Math + Portuguese courses.
+seed: 42
+data:
+  raw_dir: data/raw
+  files: [student-mat.csv, student-por.csv]
+  target: pass            # 1 if final grade G3 >= 10 else 0
+  pass_mark: 10
+  test_size: 0.2
+  # Feature setups from the baseline paper:
+  #   A = all features incl. G1 and G2, B = without G2, C = no grades (true early warning)
+  primary_setup: C
+features:
+  pca_components: 0.95    # keep 95% of variance for the PCA variant
+cv:
+  folds: 5
+optuna:
+  n_trials: 40
+  metric: roc_auc
+benchmark:
+  repeats: 5              # repeated stratified 10-fold, as in the baseline paper
+  folds: 10
+mlflow:
+  tracking_uri: mlruns
+  experiment: student-failure-aml
+paths:
+  artifacts: artifacts
+  figures: figures

@@ -1,0 +1,109 @@
+{
+  "baseline": "P. Cortez and A. Silva, \"Using data mining to predict secondary school student performance,\" in Proc. 5th Future Business Technology Conf. (FUBUTEC), Porto, Portugal, 2008, pp. 5-12.",
+  "protocol": "5x10-fold stratified CV",
+  "champion": "XGBoost",
+  "rows": [
+    {
+      "course": "mat",
+      "setup": "A",
+      "n": 395,
+      "paper_model": "NV",
+      "paper_acc": 91.9,
+      "XGBoost": {
+        "mean": 91.49,
+        "std": 5.02
+      },
+      "t_test_p": 0.5707240196589438,
+      "delta": -0.41,
+      "LogisticRegression": {
+        "mean": 92.09,
+        "std": 4.46
+      }
+    },
+    {
+      "course": "mat",
+      "setup": "B",
+      "n": 395,
+      "paper_model": "NV",
+      "paper_acc": 83.8,
+      "XGBoost": {
+        "mean": 84.82,
+        "std": 4.17
+      },
+      "t_test_p": 0.09315223270276687,
+      "delta": 1.02,
+      "LogisticRegression": {
+        "mean": 83.14,
+        "std": 5.36
+      }
+    },
+    {
+      "course": "mat",
+      "setup": "C",
+      "n": 395,
+      "paper_model": "SVM",
+      "paper_acc": 70.6,
+      "XGBoost": {
+        "mean": 72.15,
+        "std": 4.92
+      },
+      "t_test_p": 0.03202876956727386,
+      "delta": 1.55,
+      "LogisticRegression": {
+        "mean": 67.2,
+        "std": 6.87
+      }
+    },
+    {
+      "course": "por",
+      "setup": "A",
+      "n": 649,
+      "paper_model": "DT",
+      "paper_acc": 93.0,
+      "XGBoost": {
+        "mean": 93.04,
+        "std": 2.77
+      },
+      "t_test_p": 0.9278600188262173,
+      "delta": 0.04,
+      "LogisticRegression": {
+        "mean": 89.03,
+        "std": 3.96
+      }
+    },
+    {
+      "course": "por",
+      "setup": "B",
+      "n": 649,
+      "paper_model": "RF",
+      "paper_acc": 90.1,
+      "XGBoost": {
+        "mean": 91.0,
+        "std": 2.42
+      },
+      "t_test_p": 0.012033297520183202,
+      "delta": 0.9,
+      "LogisticRegression": {
+        "mean": 86.56,
+        "std": 3.66
+      }
+    },
+    {
+      "course": "por",
+      "setup": "C",
+      "n": 649,
+      "paper_model": "RF",
+      "paper_acc": 85.0,
+      "XGBoost": {
+        "mean": 85.45,
+        "std": 2.52
+      },
+      "t_test_p": 0.21307980425303746,
+      "delta": 0.45,
+      "LogisticRegression": {
+        "mean": 77.78,
+        "std": 4.55
+      }
+    }
+  ]
+}

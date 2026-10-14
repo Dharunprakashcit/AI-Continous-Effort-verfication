@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  body { margin: 0; background: #fff; font-family: Arial, Helvetica, sans-serif; }
+  svg { display: block; background: #fff; }
+  text { font-family: Arial, Helvetica, sans-serif; fill: #111; }
+  .t { font-size: 13px; font-weight: 700; }
+  .s { font-size: 11px; }
+  .l { font-size: 10.5px; fill: #333; font-style: italic; }
+  .h { font-size: 12px; font-weight: 700; fill: #333; letter-spacing: .5px; }
+  .c { font-size: 11px; fill: #333; }
+</style>
+</head>
+<body>
+<div id="figs"></div>
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const FILL = { app: "#e8eefc", api: "#e6f4ea", db: "#fff4d6", ml: "#f3e8fd", agent: "#e0f2f1", warn: "#fde8e8", ext: "#eeeeee" };
+function mk(id, w, h) {
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("id", id); svg.setAttribute("width", w); svg.setAttribute("height", h); svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  const defs = document.createElementNS(NS, "defs");
+  defs.innerHTML = `<marker id="${id}-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#333"/></marker>`;
+  svg.appendChild(defs); document.getElementById("figs").appendChild(svg); return svg;
+}
+function el(svg, tag, attrs, text) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; svg.appendChild(e); return e; }
+function box(svg, x, y, w, h, title, lines = [], fill = "#fff") {
+  el(svg, "rect", { x, y, width: w, height: h, rx: 6, fill, stroke: "#333", "stroke-width": 1.2 });
+  el(svg, "text", { x: x + w / 2, y: y + 18, "text-anchor": "middle", class: "t" }, title);
+  lines.forEach((ln, i) => el(svg, "text", { x: x + w / 2, y: y + 36 + i * 14, "text-anchor": "middle", class: "s" }, ln));
+}
+function group(svg, x, y, w, h, label) {
+  el(svg, "rect", { x, y, width: w, height: h, rx: 8, fill: "none", stroke: "#999", "stroke-width": 1, "stroke-dasharray": "6 4" });
+  el(svg, "text", { x: x + 10, y: y + 15, class: "h" }, label);
+}
+function arrow(svg, id, x1, y1, x2, y2, label, o = {}) {
+  el(svg, "line", { x1, y1, x2, y2, stroke: "#333", "stroke-width": 1.3, "marker-end": `url(#${id}-a)` });
+  if (label) el(svg, "text", { x: o.lx ?? (x1 + x2) / 2, y: o.ly ?? ((y1 + y2) / 2 - 5), "text-anchor": "middle", class: "l" }, label);
+}
+function poly(svg, id, pts, label, lx, ly) {
+  el(svg, "polyline", { points: pts.map(p => p.join(",")).join(" "), fill: "none", stroke: "#333", "stroke-width": 1.3, "marker-end": `url(#${id}-a)` });
+  if (label) el(svg, "text", { x: lx, y: ly, "text-anchor": "middle", class: "l" }, label);
+}
+
+/* A1: network architecture */
+(() => {
+  const id = "a1"; const s = mk(id, 1100, 440);
+  const layers = [
+    { n: 6, x: 230, name: "Input", sub: "6 features", color: "#e8eefc" },
+    { n: 16, x: 460, name: "Dense 1", sub: "16 neurons, ReLU", color: "#f3e8fd" },
+    { n: 8, x: 750, name: "Dense 2", sub: "8 neurons, ReLU", color: "#f3e8fd" },
+    { n: 1, x: 980, name: "Output", sub: "1 neuron, sigmoid", color: "#fde8e8" },
+  ];
+  const pos = (L, i) => [L.x, 220 + (i - (L.n - 1) / 2) * (L.n === 16 ? 18 : 30)];
+  for (let l = 0; l < layers.length - 1; l++)
+    for (let i = 0; i < layers[l].n; i++) for (let j = 0; j < layers[l + 1].n; j++) {
+      const [x1, y1] = pos(layers[l], i), [x2, y2] = pos(layers[l + 1], j);
+      el(s, "line", { x1, y1, x2, y2, stroke: "#bbb", "stroke-width": 0.5 });
+    }
+  layers.forEach((L) => {
+    for (let i = 0; i < L.n; i++) { const [x, y] = pos(L, i); el(s, "circle", { cx: x, cy: y, r: L.n === 16 ? 6.5 : 9, fill: L.color, stroke: "#333", "stroke-width": 1 }); }
+    el(s, "text", { x: L.x, y: 62, "text-anchor": "middle", class: "t" }, L.name);
+    el(s, "text", { x: L.x, y: 78, "text-anchor": "middle", class: "s" }, L.sub);
+  });
+  const names = ["tasks_completed_pct", "doc_edits", "messages_sent", "commits", "deadline_adherence_pct", "active_days_last7"];
+  names.forEach((n, i) => el(s, "text", { x: 215, y: pos(layers[0], i)[1] + 4, "text-anchor": "end", class: "c" }, n));
+  el(s, "text", { x: 1000, y: 224, class: "c" }, "p");
+  el(s, "text", { x: 605, y: 62, "text-anchor": "middle", class: "t" }, "Dropout 0.2");
+  el(s, "text", { x: 605, y: 78, "text-anchor": "middle", class: "s" }, "training only");
+  el(s, "line", { x1: 605, y1: 88, x2: 605, y2: 140, stroke: "#999", "stroke-dasharray": "4 3" });
+  el(s, "text", { x: 345, y: 395, "text-anchor": "middle", class: "s" }, "112 parameters (6x16+16)");
+  el(s, "text", { x: 605, y: 395, "text-anchor": "middle", class: "s" }, "136 parameters (16x8+8)");
+  el(s, "text", { x: 865, y: 395, "text-anchor": "middle", class: "s" }, "9 parameters (8x1+1)");
+  el(s, "text", { x: 550, y: 425, "text-anchor": "middle", class: "t" }, "Total 257 trainable parameters. Inputs are standardized before the first layer.");
+})();
+
+/* A2: ANN in the system */
+(() => {
+  const id = "a2"; const s = mk(id, 1100, 470);
+  group(s, 10, 10, 330, 170, "BACKEND (Node.js)");
+  box(s, 25, 35, 300, 50, "Orchestrator", ["aggregates 7 days of activity and tasks"], FILL.agent);
+  box(s, 25, 100, 300, 65, "Edit, Task, Communication agents", ["scores from 0 to 100, plus written notes"], FILL.agent);
+  group(s, 380, 10, 330, 170, "ML SERVICE (Flask, port 5001)");
+  box(s, 395, 35, 300, 50, "POST /predict", ["validates 6 features, scales, runs ANN"], FILL.ml);
+  box(s, 395, 100, 300, 65, "Free-riding ANN", ["model.h5 and scaler.pkl, loaded at start", "returns risk_probability (0 to 1)"], FILL.ml);
+  arrow(s, id, 325, 60, 395, 60, "features", { ly: 52 });
+  arrow(s, id, 395, 80, 325, 80, "p", { ly: 96 });
+  group(s, 750, 10, 340, 170, "FUSION AND DECISION (backend)");
+  box(s, 765, 35, 310, 70, "Risk Agent", ["contribution = 0.30 Edit + 0.35 Task", "+ 0.15 Comm + 0.20 (100 - 100 p)"], FILL.agent);
+  box(s, 765, 115, 310, 55, "Decision Agent", ["risk < 30 ALLOW, 30 to 70 NUDGE, > 70 ALERT"], FILL.agent);
+  arrow(s, id, 695, 70, 765, 70, "p", { ly: 62 });
+  arrow(s, id, 920, 105, 920, 115, "");
+  box(s, 750, 230, 340, 60, "Prediction record (MongoDB)", ["annRiskProbability, scores, level, decision, reasons"], FILL.db);
+  arrow(s, id, 920, 170, 920, 230, "");
+  box(s, 395, 230, 300, 60, "Fallback", ["after a 3 s timeout or failure: rule-based", "estimate, labelled fallback-heuristic"], FILL.warn);
+  arrow(s, id, 545, 180, 545, 230, "unreachable or timeout", { lx: 625, ly: 210 });
+  arrow(s, id, 695, 260, 765, 120, "", {});
+  box(s, 25, 230, 300, 60, "Public estimator (landing page)", ["same /predict, log false, nothing stored"], FILL.app);
+  arrow(s, id, 325, 260, 395, 120, "", {});
+  group(s, 10, 330, 1080, 130, "WHERE THE OUTPUT APPEARS");
+  box(s, 25, 355, 250, 90, "Student AI feedback", ["ANN risk bar, reasons,", "suggested next step"], FILL.app);
+  box(s, 295, 355, 250, 90, "Faculty student detail", ["agent breakdown with ANN risk,", "review of the prediction"], FILL.app);
+  box(s, 565, 355, 250, 90, "Faculty analytics", ["model comparison, drift status"], FILL.app);
+  box(s, 835, 355, 240, 90, "Feedback and retraining", ["correct or incorrect labels become", "training rows (retrain.py)"], FILL.ml);
+  arrow(s, id, 920, 290, 920, 330, "");
+})();
+
+/* A3: training pipeline */
+(() => {
+  const id = "a3"; const s = mk(id, 1100, 360);
+  const items = [
+    ["Simulate", ["4,000 records", "latent effort + noise", "label: risk > 0.45"], FILL.db],
+    ["Split", ["80/20 stratified", "random_state 42", "3,200 / 800"], FILL.ml],
+    ["Scale", ["StandardScaler", "fit on training rows", "saved as scaler.pkl"], FILL.ml],
+    ["Train", ["Adam, binary cross-entropy", "batch 32, max 100 epochs", "validation split 0.15"], FILL.ml],
+    ["Early stopping", ["monitor val_loss", "patience 8", "restore best weights"], FILL.ml],
+    ["Evaluate", ["accuracy, precision, recall", "F1, ROC-AUC, confusion", "metrics.json"], FILL.ml],
+  ];
+  items.forEach((it, i) => {
+    const x = 15 + i * 180;
+    box(s, x, 30, 160, 92, it[0], it[1], it[2]);
+    if (i) arrow(s, id, x - 20, 76, x, 76);
+  });
+  box(s, 15, 190, 250, 70, "Artifacts", ["model.h5 (257 parameters)", "scaler.pkl, feature_names.json"], FILL.ml);
+  box(s, 295, 190, 250, 70, "Served by Flask", ["loaded once at start, in memory"], FILL.ml);
+  box(s, 575, 190, 250, 70, "Compared in aml_pipeline.py", ["against four classical models,", "same split, 5-fold CV"], FILL.ml);
+  box(s, 855, 190, 230, 70, "Monitored", ["KS test and PSI on live inputs"], FILL.ml);
+  poly(s, id, [[1005, 122], [1005, 150], [140, 150], [140, 190]]);
+  arrow(s, id, 265, 225, 295, 225); arrow(s, id, 545, 225, 575, 225); arrow(s, id, 825, 225, 855, 225);
+  el(s, "text", { x: 15, y: 305, class: "s" }, "Data is simulated: no public dataset of team free-riding exists, so labels come from a rule-based simulator. Results describe the method, not real students.");
+  el(s, "text", { x: 15, y: 325, class: "s" }, "The deployed model was trained once by train_model.py. The experiments in this report re-run training only in memory.");
+})();
+</script>
+</body>
+</html>

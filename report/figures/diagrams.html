@@ -1,0 +1,216 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  body { margin: 0; background: #fff; font-family: Arial, Helvetica, sans-serif; }
+  svg { display: block; margin: 0; background: #fff; }
+  text { font-family: Arial, Helvetica, sans-serif; fill: #111; }
+  .t { font-size: 13px; font-weight: 700; }
+  .s { font-size: 11px; }
+  .l { font-size: 10.5px; fill: #333; font-style: italic; }
+  .h { font-size: 12px; font-weight: 700; fill: #333; letter-spacing: .5px; }
+</style>
+</head>
+<body>
+<div id="figs"></div>
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const FILL = { app: "#e8eefc", api: "#e6f4ea", db: "#fff4d6", ml: "#f3e8fd", ext: "#eeeeee", agent: "#e0f2f1", warn: "#fde8e8" };
+
+function mk(id, w, h) {
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("id", id); svg.setAttribute("width", w); svg.setAttribute("height", h);
+  svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  const defs = document.createElementNS(NS, "defs");
+  defs.innerHTML = `<marker id="${id}-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#333"/></marker>`;
+  svg.appendChild(defs);
+  document.getElementById("figs").appendChild(svg);
+  return svg;
+}
+function el(svg, tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  svg.appendChild(e); return e;
+}
+function box(svg, x, y, w, h, title, lines = [], fill = "#fff", opts = {}) {
+  el(svg, "rect", { x, y, width: w, height: h, rx: 6, fill, stroke: opts.dash ? "#666" : "#333", "stroke-width": 1.2, "stroke-dasharray": opts.dash ? "5 3" : "" });
+  el(svg, "text", { x: x + w / 2, y: y + 18, "text-anchor": "middle", class: "t" }, title);
+  lines.forEach((ln, i) => el(svg, "text", { x: x + w / 2, y: y + 36 + i * 14, "text-anchor": "middle", class: "s" }, ln));
+}
+function group(svg, x, y, w, h, label) {
+  el(svg, "rect", { x, y, width: w, height: h, rx: 8, fill: "none", stroke: "#999", "stroke-width": 1, "stroke-dasharray": "6 4" });
+  el(svg, "text", { x: x + 10, y: y + 15, class: "h" }, label);
+}
+function arrow(svg, id, x1, y1, x2, y2, label, opts = {}) {
+  el(svg, "line", { x1, y1, x2, y2, stroke: "#333", "stroke-width": 1.3, "marker-end": `url(#${id}-a)`, "marker-start": opts.both ? `url(#${id}-a)` : "" });
+  if (label) el(svg, "text", { x: opts.lx ?? (x1 + x2) / 2, y: opts.ly ?? ((y1 + y2) / 2 - 4), "text-anchor": "middle", class: "l" }, label);
+}
+function poly(svg, id, pts, label, lx, ly) {
+  el(svg, "polyline", { points: pts.map(p => p.join(",")).join(" "), fill: "none", stroke: "#333", "stroke-width": 1.3, "marker-end": `url(#${id}-a)` });
+  if (label) el(svg, "text", { x: lx, y: ly, "text-anchor": "middle", class: "l" }, label);
+}
+
+/* Fig 1: architecture */
+(() => {
+  const id = "fig1"; const s = mk(id, 1100, 640);
+  group(s, 10, 10, 250, 300, "PRESENTATION LAYER");
+  box(s, 25, 35, 220, 60, "Student portal", ["Overview, Assignments, Activity,", "Tasks, AI feedback"], FILL.app);
+  box(s, 25, 105, 220, 60, "Faculty portal", ["Assignments, Teams, Analytics,", "Alerts, student analysis"], FILL.app);
+  box(s, 25, 175, 220, 50, "Landing, Login, Legal pages", ["React 18, React Router, Vite"], FILL.app);
+  box(s, 25, 235, 220, 60, "SVG charts and animation", ["Ring, donut, bars, lines (custom)"], FILL.app);
+
+  group(s, 300, 10, 440, 410, "APPLICATION LAYER (Node.js, Express)");
+  box(s, 315, 35, 410, 44, "REST API and security", ["JWT authentication, role middleware, ownership checks"], FILL.api);
+  box(s, 315, 90, 200, 70, "Assignments and teams", ["Classroom provider (simulated)", "Contribution, teams, records"], FILL.api);
+  box(s, 525, 90, 200, 70, "Effort monitoring", ["Student, faculty, task and", "activity routes"], FILL.api);
+  group(s, 315, 175, 410, 235, "AGENT PIPELINE AND RISK SERVICE");
+  box(s, 330, 200, 120, 50, "Orchestrator", ["7-day window"], FILL.agent);
+  box(s, 465, 195, 80, 38, "Edit", [], FILL.agent);
+  box(s, 555, 195, 80, 38, "Task", [], FILL.agent);
+  box(s, 645, 195, 70, 38, "Comm.", [], FILL.agent);
+  box(s, 330, 270, 180, 60, "Risk Agent", ["fuses agent scores and", "ANN probability"], FILL.agent);
+  box(s, 540, 270, 175, 60, "Decision Agent", ["ALLOW, NUDGE, ALERT", "with written reasons"], FILL.agent);
+  box(s, 330, 345, 385, 50, "Academic risk service", ["builds 8 features, calls model, lists factors"], FILL.agent);
+
+  group(s, 790, 10, 300, 300, "ML SERVICE (Python, Flask)");
+  box(s, 805, 35, 270, 60, "Free-riding ANN (Keras)", ["6 inputs, 16-8-1, sigmoid", "POST /predict"], FILL.ml);
+  box(s, 805, 105, 270, 60, "Academic risk model (sklearn)", ["8 inputs, logistic regression", "POST /academic/predict"], FILL.ml);
+  box(s, 805, 175, 270, 55, "Model info and drift", ["GET /model/info, /model/drift", "KS test and PSI"], FILL.ml);
+  box(s, 805, 240, 270, 55, "Artifacts", ["model.h5, scaler.pkl, academic_model.pkl", "registry.json, reports"], FILL.ml);
+
+  group(s, 300, 450, 440, 175, "DATA LAYER (MongoDB via Mongoose)");
+  box(s, 315, 475, 130, 55, "Users, Teams", ["Tasks, Activity"], FILL.db);
+  box(s, 455, 475, 130, 55, "Assignments", ["Submissions", "Contributions"], FILL.db);
+  box(s, 595, 475, 130, 55, "Predictions", ["agent scores, reasons,", "faculty feedback"], FILL.db);
+  box(s, 315, 545, 410, 65, "StudentAssignmentRecord", ["one row per student per assignment, 14 columns, CSV export"], FILL.db);
+
+  group(s, 790, 340, 300, 285, "OFFLINE AML WORKFLOW");
+  box(s, 805, 365, 270, 50, "train_model.py, academic_model.py", ["simulated data, training, metrics"], FILL.ml);
+  box(s, 805, 425, 270, 50, "aml_pipeline.py", ["validation, CV, tuning, registry"], FILL.ml);
+  box(s, 805, 485, 270, 50, "drift_monitor.py", ["live inputs against training data"], FILL.ml);
+  box(s, 805, 545, 270, 65, "retrain.py", ["faculty feedback becomes labelled", "rows, then retrain and compare"], FILL.ml);
+
+  arrow(s, id, 245, 70, 315, 57, "HTTP/JSON", { lx: 280, ly: 52 });
+  arrow(s, id, 245, 140, 315, 60, "", {});
+  arrow(s, id, 520, 160, 520, 175, "");
+  arrow(s, id, 725, 215, 805, 65, "HTTP", { lx: 770, ly: 135 });
+  arrow(s, id, 725, 370, 805, 140, "HTTP", { lx: 775, ly: 280 });
+  arrow(s, id, 520, 410, 520, 450, "read and write", { lx: 520, ly: 440 });
+  arrow(s, id, 940, 365, 940, 295, "writes", { lx: 965, ly: 335 });
+})();
+
+/* Fig 2: assignment workflow */
+(() => {
+  const id = "fig2"; const s = mk(id, 1100, 520);
+  group(s, 10, 10, 1080, 110, "FACULTY: IMPORT");
+  box(s, 25, 38, 170, 60, "Connect Classroom", ["simulated provider"], FILL.ext);
+  box(s, 225, 38, 150, 60, "Select course", ["Advanced Machine", "Learning"], FILL.ext);
+  box(s, 405, 38, 150, 60, "Sync", ["assignments, submissions"], FILL.api);
+  box(s, 585, 38, 200, 60, "Build records", ["StudentAssignmentRecord", "(14 columns)"], FILL.db);
+  box(s, 815, 38, 250, 60, "Assignments appear", ["2 individual, 1 team"], FILL.app);
+  arrow(s, id, 195, 68, 225, 68); arrow(s, id, 375, 68, 405, 68); arrow(s, id, 555, 68, 585, 68); arrow(s, id, 785, 68, 815, 68);
+
+  group(s, 10, 140, 520, 370, "INDIVIDUAL ASSIGNMENT");
+  box(s, 40, 170, 220, 55, "Student list", ["submitted, score, late, attempts"], FILL.app);
+  box(s, 40, 255, 220, 55, "Contribution", ["100% if submitted, 0% if not"], FILL.api);
+  box(s, 40, 340, 220, 55, "Student analysis", ["submission, activity, feedback"], FILL.app);
+  box(s, 40, 425, 220, 60, "Academic risk", ["8-feature model, factors"], FILL.ml);
+  arrow(s, id, 150, 225, 150, 255); arrow(s, id, 150, 310, 150, 340); arrow(s, id, 150, 395, 150, 425);
+  box(s, 290, 170, 220, 55, "Student view (Individual tab)", ["due, status, marks, activity, feedback"], FILL.app);
+  box(s, 290, 255, 220, 55, "View Activity", ["details, comments, 14-day history"], FILL.app);
+  arrow(s, id, 400, 225, 400, 255);
+
+  group(s, 560, 140, 530, 370, "TEAM (CONTRIBUTED) ASSIGNMENT");
+  box(s, 580, 170, 230, 55, "Team list", ["scores, largest and smallest share"], FILL.app);
+  box(s, 580, 255, 230, 55, "Team members", ["estimated contribution, tasks, status"], FILL.api);
+  box(s, 580, 340, 230, 55, "Student analysis", ["weighted components, signals"], FILL.app);
+  box(s, 580, 425, 230, 60, "Academic risk", ["separate from contribution"], FILL.ml);
+  arrow(s, id, 695, 225, 695, 255); arrow(s, id, 695, 310, 695, 340); arrow(s, id, 695, 395, 695, 425);
+  box(s, 840, 170, 235, 55, "Create Team", ["student or faculty, no percentages"], FILL.warn);
+  box(s, 840, 255, 235, 55, "Student view (Contributed tab)", ["own team, members, percentages"], FILL.app);
+  box(s, 840, 340, 235, 55, "Contribution Analysis", ["comments, interactions, tasks,", "submissions, activity"], FILL.app);
+  arrow(s, id, 957, 225, 957, 255, "records rebuilt", { lx: 1010, ly: 245 }); arrow(s, id, 957, 310, 957, 340);
+})();
+
+/* Fig 3: effort monitoring pipeline */
+(() => {
+  const id = "fig3"; const s = mk(id, 1100, 470);
+  box(s, 20, 30, 190, 70, "Inputs (7-day window)", ["Activity: edits, commits,", "messages, replies, days", "Tasks and deadlines"], FILL.db);
+  box(s, 250, 30, 170, 70, "Orchestrator", ["runPipelineForStudent", "gathers and aggregates"], FILL.agent);
+  arrow(s, id, 210, 65, 250, 65);
+  box(s, 470, 10, 180, 50, "Edit Agent", ["sqrt-scaled edits, commits"], FILL.agent);
+  box(s, 470, 70, 180, 50, "Task Agent", ["completion and on-time rate"], FILL.agent);
+  box(s, 470, 130, 180, 50, "Communication Agent", ["messages, replies weighted"], FILL.agent);
+  arrow(s, id, 420, 55, 470, 35); arrow(s, id, 420, 65, 470, 95); arrow(s, id, 420, 75, 470, 155);
+  box(s, 470, 230, 180, 70, "ANN service", ["6 features", "risk probability p"], FILL.ml);
+  poly(s, id, [[335, 100], [335, 265], [470, 265]], "features", 400, 258);
+  box(s, 710, 70, 200, 110, "Risk Agent", ["contribution =", "0.30 Edit + 0.35 Task", "+ 0.15 Comm + 0.20 (100 - 100p)", "risk = 100 - contribution"], FILL.agent);
+  arrow(s, id, 650, 35, 710, 100); arrow(s, id, 650, 95, 710, 120); arrow(s, id, 650, 155, 710, 140); arrow(s, id, 650, 265, 710, 160);
+  box(s, 950, 70, 130, 110, "Decision Agent", ["risk < 30: ALLOW", "30 to 70: NUDGE", "> 70: ALERT"], FILL.agent);
+  arrow(s, id, 910, 125, 950, 125);
+  box(s, 710, 250, 370, 60, "Prediction record (MongoDB)", ["scores, ANN probability, level, decision, reasons"], FILL.db);
+  arrow(s, id, 1015, 180, 1015, 250);
+  box(s, 710, 340, 175, 70, "Faculty feedback", ["correct or incorrect"], FILL.warn);
+  box(s, 905, 340, 175, 70, "Faculty dashboard", ["teams, student detail, alerts"], FILL.app);
+  arrow(s, id, 800, 310, 800, 340); arrow(s, id, 990, 310, 990, 340);
+  box(s, 470, 340, 190, 70, "Retraining data", ["feedback-export, flipped", "labels, retrain.py"], FILL.ml);
+  arrow(s, id, 710, 375, 660, 375, "", {});
+  el(s, "text", { x: 685, y: 428, "text-anchor": "middle", class: "l" }, "exported rows");
+  el(s, "text", { x: 20, y: 450, class: "l" }, "Fallback: when the ANN service is unreachable within 3 s, the Risk Agent uses a rule-based estimate of the same latent formula.");
+})();
+
+/* Fig 4: data model */
+(() => {
+  const id = "fig4"; const s = mk(id, 1100, 560);
+  box(s, 20, 20, 200, 110, "User", ["name, email, passwordHash", "role (student, faculty)", "registerNo, team", "attendancePct, internalMarks,", "previousGpa"], FILL.db);
+  box(s, 280, 20, 200, 90, "Team", ["name, projectTitle, faculty", "members [User]", "assignment (optional)"], FILL.db);
+  box(s, 540, 20, 220, 110, "Assignment", ["externalId, title, type", "assignedDate, dueDate, maxScore", "teams [Team]", "teamSubmissions []", "syncedAt"], FILL.db);
+  box(s, 820, 20, 250, 110, "Submission", ["assignment, student", "submitted, late, score, attempts", "feedback, comments []"], FILL.db);
+  box(s, 20, 200, 200, 100, "Task", ["title, status, deadline", "team, assignee, assignment", "completedAt"], FILL.db);
+  box(s, 280, 200, 200, 100, "Activity", ["student, team, date", "docEdits, commits, messagesSent,", "repliesGiven, activeMinutes"], FILL.db);
+  box(s, 540, 200, 220, 110, "Contribution", ["assignment, team, student", "commits, pullRequests,", "filesModified, docPages,", "peerRating, facultyRating"], FILL.db);
+  box(s, 820, 200, 250, 150, "Prediction", ["student, team, three agent scores", "annRiskProbability, overallRisk", "contributionScore, riskLevel", "decision, explanations []", "featuresUsed, facultyFeedback"], FILL.db);
+  box(s, 280, 380, 560, 120, "StudentAssignmentRecord", ["student, assignment, assignmentType, team", "attendance, assignmentScore, submissionStatus, lateSubmission", "commentsCount, relevantComments, tasksCompleted", "projectInteractions, activityScore, contributionScore", "unique (student, assignment)"], FILL.db);
+  arrow(s, id, 220, 70, 280, 70, "member of", { lx: 250, ly: 62 });
+  arrow(s, id, 480, 65, 540, 65, "teams", { lx: 510, ly: 57 });
+  arrow(s, id, 760, 70, 820, 70, "has", { lx: 790, ly: 62 });
+  arrow(s, id, 120, 130, 120, 200, "assigned to", { lx: 160, ly: 170 });
+  arrow(s, id, 380, 110, 380, 200, "", {});
+  arrow(s, id, 650, 130, 650, 200, "", {});
+  arrow(s, id, 920, 130, 920, 200, "", {});
+  arrow(s, id, 760, 255, 820, 255, "", {});
+  arrow(s, id, 650, 310, 600, 380, "derived into", { lx: 650, ly: 345 });
+  arrow(s, id, 380, 300, 420, 380, "", {});
+  arrow(s, id, 120, 300, 300, 400, "", {});
+})();
+
+/* Fig 5: AML workflow */
+(() => {
+  const id = "fig5"; const s = mk(id, 1100, 430);
+  const y = 40; const w = 150; const h = 74;
+  const items = [
+    ["Simulated dataset", ["4,000 rows (effort)", "5,000 rows (academic)"], FILL.db],
+    ["Validation", ["ranges, missing values,", "class balance"], FILL.ml],
+    ["Split", ["80/20 stratified,", "seed 42"], FILL.ml],
+    ["Models", ["LR, RF, GB, MLP,", "Keras ANN"], FILL.ml],
+    ["Tuning and CV", ["5-fold stratified,", "grid search"], FILL.ml],
+    ["Evaluation", ["accuracy, precision, recall,", "F1, ROC-AUC"], FILL.ml],
+  ];
+  items.forEach((it, i) => { box(s, 20 + i * 178, y, w, h, it[0], it[1], it[2]); if (i) arrow(s, id, 20 + i * 178 - 28, y + h / 2, 20 + i * 178, y + h / 2); });
+  box(s, 20, 190, 200, 70, "Champion and registry", ["versioned model, metrics,", "dataset hash"], FILL.ml);
+  box(s, 270, 190, 200, 70, "Serving", ["Flask: /predict,", "/academic/predict"], FILL.ml);
+  box(s, 520, 190, 200, 70, "Monitoring", ["KS test and PSI of", "live inputs"], FILL.ml);
+  box(s, 770, 190, 300, 70, "Faculty feedback", ["correct or incorrect on each prediction"], FILL.warn);
+  box(s, 770, 310, 300, 70, "Retraining", ["labelled rows appended, retrain, compare"], FILL.ml);
+  poly(s, id, [[1000, 114 + 0], [1000, 150], [120, 150], [120, 190]]);
+  arrow(s, id, 220, 225, 270, 225); arrow(s, id, 470, 225, 520, 225);
+  arrow(s, id, 720, 225, 770, 225, "drift suggests retraining", { lx: 745, ly: 215 });
+  arrow(s, id, 920, 260, 920, 310);
+  poly(s, id, [[770, 345], [120, 345], [120, 114]], "");
+  el(s, "text", { x: 440, y: 338, class: "l" }, "new labelled rows return to the dataset");
+})();
+</script>
+</body>
+</html>

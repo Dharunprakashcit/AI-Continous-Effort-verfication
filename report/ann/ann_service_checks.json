@@ -1,0 +1,187 @@
+{
+  "ran_at": "2026-10-07 05:34:08",
+  "summary": {
+    "total": 12,
+    "passed": 12
+  },
+  "results": [
+    {
+      "id": "S1",
+      "case": "Health endpoint",
+      "expected": "200, model_loaded true",
+      "actual": "200, {'model_loaded': True, 'status': 'ok'}",
+      "status": "Pass"
+    },
+    {
+      "id": "S2",
+      "case": "Valid request returns probability and metadata",
+      "expected": "200, p in [0,1], four keys",
+      "actual": "200, keys ['features_used', 'model_version', 'risk_percent', 'risk_probability']",
+      "status": "Pass"
+    },
+    {
+      "id": "S3",
+      "case": "Missing features",
+      "expected": "400 with the list of expected features",
+      "actual": "400, error mentions expected features: True",
+      "status": "Pass"
+    },
+    {
+      "id": "S4",
+      "case": "Non-numeric value",
+      "expected": "400",
+      "actual": "400",
+      "status": "Pass"
+    },
+    {
+      "id": "S5",
+      "case": "Empty request body",
+      "expected": "Rejected (4xx or 5xx), not a prediction",
+      "actual": "400",
+      "status": "Pass"
+    },
+    {
+      "id": "S6",
+      "case": "Out-of-range values",
+      "expected": "Documented behaviour (no range validation)",
+      "actual": "out-of-range inputs accepted: 200 p=0.0, 200 p=0.0",
+      "status": "Pass"
+    },
+    {
+      "id": "S7",
+      "case": "Determinism",
+      "expected": "Same input gives the same output",
+      "actual": "1 distinct value over 5 calls: [0.9994]",
+      "status": "Pass"
+    },
+    {
+      "id": "S8",
+      "case": "Risk falls as task completion rises",
+      "expected": "Non-increasing",
+      "actual": "[0.9997, 0.9987, 0.9954, 0.9844, 0.9485]",
+      "status": "Pass"
+    },
+    {
+      "id": "S9",
+      "case": "Low activity scores riskier than high activity",
+      "expected": "p(low) > p(high)",
+      "actual": "low-activity 0.9994, high-activity 0.0015",
+      "status": "Pass"
+    },
+    {
+      "id": "S10",
+      "case": "Drift log writes only when logging is on",
+      "expected": "+0 with log false, +1 by default",
+      "actual": "lines 155 to 155 (log false), then 156 (default)",
+      "status": "Pass"
+    },
+    {
+      "id": "S11",
+      "case": "Model info",
+      "expected": "200, five models, n_test 800",
+      "actual": "200, 5 models, n_test 800",
+      "status": "Pass"
+    },
+    {
+      "id": "S12",
+      "case": "Drift endpoint",
+      "expected": "200 with a valid status",
+      "actual": "200, status drift_detected, samples 156",
+      "status": "Pass"
+    }
+  ],
+  "latency_http": {
+    "requests": 100,
+    "median_ms": 219.9471999956586,
+    "p95_ms": 436.560099995404,
+    "max_ms": 621.8950999973458
+  },
+  "ablation": {
+    "rows": [
+      {
+        "student": "Dharun",
+        "ann_probability": 0.002,
+        "contribution_with_ann": 87,
+        "contribution_without_ann": 84,
+        "level_with": "LOW",
+        "level_without": "LOW",
+        "ann_source_in_reasons": true
+      },
+      {
+        "student": "Arun",
+        "ann_probability": 0.0349,
+        "contribution_with_ann": 70,
+        "contribution_without_ann": 63,
+        "level_with": "MEDIUM",
+        "level_without": "MEDIUM",
+        "ann_source_in_reasons": true
+      },
+      {
+        "student": "Priya",
+        "ann_probability": 0.9057,
+        "contribution_with_ann": 39,
+        "contribution_without_ann": 46,
+        "level_with": "MEDIUM",
+        "level_without": "MEDIUM",
+        "ann_source_in_reasons": true
+      },
+      {
+        "student": "Karthik",
+        "ann_probability": 0.0271,
+        "contribution_with_ann": 74,
+        "contribution_without_ann": 68,
+        "level_with": "LOW",
+        "level_without": "MEDIUM",
+        "ann_source_in_reasons": true
+      },
+      {
+        "student": "Meena",
+        "ann_probability": 0.9701,
+        "contribution_with_ann": 27,
+        "contribution_without_ann": 33,
+        "level_with": "HIGH",
+        "level_without": "MEDIUM",
+        "ann_source_in_reasons": true
+      },
+      {
+        "student": "Sanjay",
+        "ann_probability": 0.0001,
+        "contribution_with_ann": 95,
+        "contribution_without_ann": 93,
+        "level_with": "LOW",
+        "level_without": "LOW",
+        "ann_source_in_reasons": true
+      },
+      {
+        "student": "Divya",
+        "ann_probability": 0.0054,
+        "contribution_with_ann": 83,
+        "contribution_without_ann": 79,
+        "level_with": "LOW",
+        "level_without": "LOW",
+        "ann_source_in_reasons": true
+      },
+      {
+        "student": "Naveen",
+        "ann_probability": 0.0032,
+        "contribution_with_ann": 84,
+        "contribution_without_ann": 81,
+        "level_with": "LOW",
+        "level_without": "LOW",
+        "ann_source_in_reasons": true
+      },
+      {
+        "student": "Rekha",
+        "ann_probability": 0.986,
+        "contribution_with_ann": 21,
+        "contribution_without_ann": 26,
+        "level_with": "HIGH",
+        "level_without": "HIGH",
+        "ann_source_in_reasons": true
+      }
+    ],
+    "changed_level": 2,
+    "max_abs_shift_points": 7,
+    "mean_abs_shift_points": 4.777777777777778
+  }
+}

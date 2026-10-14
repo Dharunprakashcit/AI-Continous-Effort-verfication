@@ -1,0 +1,23 @@
+{
+  "studentFeedback": [
+    "Edit score 6",
+    "Task score 65",
+    "Communication 10",
+    "ANN risk 97"
+  ],
+  "studentReasons": [
+    "Very few document edits or commits recorded in this window.",
+    "2 task(s) marked late.",
+    "Low discussion participation over the last 7 days.",
+    "ANN model estimates 97.0% risk probability (ann).",
+    "Suggested next step"
+  ],
+  "facultyBreakdown": [
+    "Edit score 6",
+    "Task score 65",
+    "Communication 10",
+    "ANN risk 97"
+  ],
+  "analyticsModel": "Prediction model\nANN (Keras, deployed)\n89.9%\nMLP (sklearn)\n89.5%\nLogisticRegression\n89.4%\nGradientBoosting\n89.2%\nRandomForest\n87.8%\n\nTest ROC-AUC on held-out simulated data. The deployed network is highlighted.\n\nData drift: Live inputs have drifted in: tasks_completed_pct, doc_edits, messages_sent, commits, deadline_adherence_pct, active_days_last7.",
+  "estimator": "ESTIMATED RISK OF FREE RIDING\n\n100% High\n\nResult from the trained network, version 20260928050413. Bands use the same 30 and 70 cut-offs as the full system, which also weighs the task, edit and communication scores, so a dashboard score can differ. Nothing you enter here is stored."
+}
